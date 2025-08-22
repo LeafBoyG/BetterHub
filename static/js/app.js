@@ -1,3 +1,4 @@
+import * as api from './api.js';
 document.addEventListener('DOMContentLoaded', () => {
 
     class HabitTrackerApp {
@@ -64,14 +65,16 @@ document.addEventListener('DOMContentLoaded', () => {
         // INITIALIZATION & EVENT HANDLING
         // ===================================================================
 
-        init() {
-            this.loadState();
-            this.applyTheme();
-            this.setupEventListeners();
-            this.showPage('main-page');
-            this.render();
-            this.registerServiceWorker();
-        }
+     
+async init() {
+    // this.loadState(); // We no longer need to load from localStorage
+    this.state.tasks = await api.getAllTasks(); // Fetch tasks from the server
+    this.applyTheme();
+    this.setupEventListeners();
+    this.showPage('main-page');
+    this.render();
+    this.registerServiceWorker();
+}
 
         setupEventListeners() {
             this.dom.body.addEventListener('click', this.handleGlobalClick.bind(this));
@@ -278,28 +281,52 @@ document.addEventListener('DOMContentLoaded', () => {
         // STATE & DATA MANAGEMENT
         // ===================================================================
 
-        saveState() {
-            localStorage.setItem('habitTrackerState', JSON.stringify(this.state));
-        }
+     async completeTask(id, dateString, isComplete) {
+    const task = this.getTaskById(id);
+    if (!task) return;
 
-        loadState() {
-            const savedState = localStorage.getItem('habitTrackerState');
-            if (!savedState) return;
-            try {
-                const loaded = JSON.parse(savedState);
-                const defaultState = JSON.parse(JSON.stringify(this.state)); // Deep copy to preserve defaults
-                this.state = { ...defaultState, ...loaded };
-                this.state.settings = { ...defaultState.settings, ...loaded.settings };
-                this.state.currentDate = new Date().toDateString(); // Always reset to today
-                this.state.tasks.forEach((t, index) => {
-                    if (t.order === undefined) t.order = index;
-                    if (!t.pause) t.pause = { active: false, until: null };
-                });
-            } catch (error) {
-                console.error("Failed to parse state from localStorage. Starting fresh.", error);
-                localStorage.removeItem('habitTrackerState');
-            }
-        }
+    // Update the task's history in the local state first for a snappy UI
+    this.updateTaskHistory(id, dateString, { completed: isComplete });
+
+    if (task.type === 'habit' && task.recurrence.type === 'days') {
+        this.recalculateStreaks(task);
+    }
+
+    // Now, send the updated task object to the server to be saved
+    try {
+        await apiUpdateTask(task.id, task);
+    } catch (error) {
+        console.error("Failed to save task update to server:", error);
+        // Optionally, you could add logic here to revert the change in the UI
+    }
+
+    // The rest of the function remains the same
+    this.playSound(isComplete ? 'complete' : 'uncomplete');
+    this.render(); // Re-render the UI with the new state
+
+    // Note: We no longer call this.saveState() because the state is saved via the API call.
+}
+      /**
+ * Loads the initial state by fetching all tasks from the server.
+ * This method should be called from an async context, like an async init() method.
+ */
+async loadState() {
+    try {
+        // Fetch all tasks from the API and place them in the state
+        this.state.tasks = await apiGetAllTasks();
+        console.log("State loaded from server:", this.state.tasks);
+    } catch (error) {
+        console.error("Failed to load state from server:", error);
+        // Keep the local tasks array empty so the app doesn't crash
+        this.state.tasks = [];
+    }
+
+    // You can still load settings from localStorage as they are browser-specific
+    const savedSettings = localStorage.getItem('habitTrackerSettings');
+    if (savedSettings) {
+        this.state.settings = { ...this.state.settings, ...JSON.parse(savedSettings) };
+    }
+}
 
         // ===================================================================
         // RENDERING METHODS
@@ -350,7 +377,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.dom.taskList.innerHTML = `
                     <div class="empty-state-onboarding">
                         <div class="onboarding-icon">✨</div>
-                        <h2>Welcome to BetterHub!</h2>
+                        <h2>Welcome to Stride!</h2>
                         <p>It looks like you don't have any habits or tasks set up yet. Click the '+' button below to get started.</p>
                         <button class="btn-primary" data-action="onboard-add">Add Your First Habit</button>
                     </div>`;
@@ -747,25 +774,37 @@ document.addEventListener('DOMContentLoaded', () => {
             this.closeModal(this.dom.modals.notePrompt);
         }
 
-        completeTask(id, dateString, isComplete) {
-            const task = this.getTaskById(id);
-            if (!task) return;
-            const wasCompleted = task.history?.[dateString]?.completed || false;
-            this.updateTaskHistory(id, dateString, { completed: isComplete });
-            
-            if (task.type === 'habit' && task.recurrence.type === 'days') { 
-                this.recalculateStreaks(task); 
-            }
-            
-            this.playSound(isComplete ? 'complete' : 'uncomplete');
-            this.saveState();
-            this.render();
+      async completeTask(id, dateString, isComplete) {
+    const task = this.getTaskById(id);
+    if (!task) return;
 
-            if (!wasCompleted && isComplete) { 
-                this.checkAchievements(); 
-                this.openNotePromptModal(id, dateString); 
-            }
-        }
+    const wasCompleted = task.history?.[dateString]?.completed || false;
+    
+    // 1. Update the local state first for a snappy UI
+    this.updateTaskHistory(id, dateString, { completed: isComplete });
+    if (task.type === 'habit' && task.recurrence.type === 'days') {
+        this.recalculateStreaks(task);
+    }
+
+    // 2. Send the entire updated task object to the server
+    try {
+        await api.updateTask(task.id, task);
+    } catch (error) {
+        console.error("Failed to save task update to server:", error);
+        this.showToast("Error: Could not sync progress.");
+        // OPTIONAL: Revert the local change if the save fails
+        this.updateTaskHistory(id, dateString, { completed: wasCompleted });
+    }
+
+    // 3. The rest of the function proceeds as normal
+    this.playSound(isComplete ? 'complete' : 'uncomplete');
+    this.render(); // Re-render the UI with the new state
+
+    if (!wasCompleted && isComplete) {
+        this.checkAchievements();
+        this.openNotePromptModal(id, dateString);
+    }
+}
 
         failTask(id, dateString, isCurrentlyFailed) {
             const task = this.getTaskById(id);
@@ -782,17 +821,27 @@ document.addEventListener('DOMContentLoaded', () => {
             this.render();
             this.checkAchievements();
         }
+async deleteTask() {
+    const id = this.state.editingTaskId;
+    if (!id) return;
 
-        deleteTask() {
-            const id = this.state.editingTaskId;
-            if (!id) return;
-            if (confirm('Are you sure you want to permanently delete this task? This cannot be undone.')) {
-                this.state.tasks = this.state.tasks.filter(t => t.id !== id);
-                this.saveState();
-                this.render();
-                this.closeModal(this.dom.modals.task);
-            }
+    if (confirm('Are you sure you want to permanently delete this task?')) {
+        try {
+            // 1. Send the delete request to the server
+            await api.deleteTask(id);
+            this.showToast('Habit Deleted');
+
+            // 2. Refresh the local state with the latest data
+            this.state.tasks = await api.getAllTasks();
+            this.render();
+            this.closeModal(this.dom.modals.task);
+
+        } catch (error) {
+            console.error('Failed to delete task:', error);
+            this.showToast('Error: Could not delete habit.');
         }
+    }
+}
 
         archiveTask() {
             const id = this.state.editingTaskId;
@@ -883,7 +932,7 @@ document.addEventListener('DOMContentLoaded', () => {
             link.href = url;
             const today = new Date();
             const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-            link.download = `betterhub-backup-${dateStr}.json`;
+            link.download = `Stride-backup-${dateStr}.json`;
             this.dom.body.appendChild(link);
             link.click();
             this.dom.body.removeChild(link);
@@ -1172,7 +1221,7 @@ document.addEventListener('DOMContentLoaded', () => {
         registerServiceWorker() {
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', () => {
-                    navigator.serviceWorker.register('/service-worker.js')
+                    navigator.serviceWorker.register('/static/service-worker.js')
                         .then(reg => console.log('ServiceWorker registration successful'))
                         .catch(err => console.log('ServiceWorker registration failed: ', err));
                 });

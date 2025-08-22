@@ -425,13 +425,13 @@ body.dark-mode .task-item.failed {
 /* --- Desktop Layout and Dashboard --- */
 @media (min-width: 1024px) {
     body:not(.dark-mode) {
-        background-image: url('assets/LightModeBG.png');
+       background-image: url('../assets/LightModeBG.png') !important;
         background-repeat: repeat;
         background-color: var(--bg-color);
     }
 
     body.dark-mode {
-        background-image: url('assets/DarkModeBG.png');
+       background-image: url('../assets/DarkModeBG.png') !important;
         background-repeat: repeat;
         background-color: var(--bg-color);
     }
