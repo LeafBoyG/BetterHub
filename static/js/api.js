@@ -1,8 +1,8 @@
-
+// This file handles all communication with the Django backend API.
 
 const API_URL = '/api/tasks/';
 
-
+// Helper to get the CSRF token from cookies for secure requests
 function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -38,6 +38,9 @@ export async function createTask(taskData) {
         },
         body: JSON.stringify(taskData)
     });
+    if (!response.ok) {
+        throw new Error('Failed to create task');
+    }
     return await response.json();
 }
 
@@ -50,14 +53,20 @@ export async function updateTask(taskId, taskData) {
         },
         body: JSON.stringify(taskData)
     });
+    if (!response.ok) {
+        throw new Error('Failed to update task');
+    }
     return await response.json();
 }
 
 export async function deleteTask(taskId) {
-    await fetch(`${API_URL}${taskId}/`, {
+    const response = await fetch(`${API_URL}${taskId}/`, {
         method: 'DELETE',
         headers: {
             'X-CSRFToken': csrftoken
         }
     });
+    if (!response.ok) {
+        throw new Error('Failed to delete task');
+    }
 }
