@@ -6,6 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stride</title>
     <link rel="icon" href="{% static 'Icons/favicon.ico' %}" type="image/x-icon">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
@@ -170,7 +175,10 @@
                 <h3>Pause Habit</h3>
                 <div class="setting-item">
                     <label for="pause-toggle">Pause this habit</label>
-                    <input type="checkbox" id="pause-toggle" class="toggle-switch">
+                    <label class="switch">
+                        <input type="checkbox" id="pause-toggle">
+                        <span class="slider round"></span>
+                    </label>
                 </div>
                 <div id="pause-until-container" class="input-group" style="display: none; margin-top: 1rem;">
                     <label for="pause-until-input">Pause until (inclusive)</label>
@@ -203,15 +211,24 @@
             <h2>Settings</h2>
             <div class="setting-item">
                 <label for="theme-toggle">Dark Mode</label>
-                <input type="checkbox" id="theme-toggle" class="toggle-switch">
+                <label class="switch">
+                    <input type="checkbox" id="theme-toggle">
+                    <span class="slider round"></span>
+                </label>
             </div>
             <div class="setting-item">
                 <label for="sound-toggle">Sound Effects</label>
-                <input type="checkbox" id="sound-toggle" class="toggle-switch">
+                <label class="switch">
+                    <input type="checkbox" id="sound-toggle">
+                    <span class="slider round"></span>
+                </label>
             </div>
             <div class="setting-item">
                 <label for="vacation-toggle">Vacation Mode</label>
-                <input type="checkbox" id="vacation-toggle" class="toggle-switch">
+                <label class="switch">
+                    <input type="checkbox" id="vacation-toggle">
+                    <span class="slider round"></span>
+                </label>
             </div>
             <div id="vacation-dates" class="input-group" style="display: none;">
                 <label>From</label><input type="date" id="vacation-start">

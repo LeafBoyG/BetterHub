@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Your Hub{% endblock %}
+
+{% block content %}
+<div class="page-content-wrapper">
+    <div class="dashboard-header">
+        <h2>Your Hub</h2>
+        <p>Select an application to get started.</p>
+    </div>
+
+    <div class="hub-grid">
+        <a href="{% url 'stride-app' %}" class="app-card">
+            <div class="app-card-icon">👟</div>
+            <h3>Stride</h3>
+            <p>Track your habits and build consistency.</p>
+        </a>
+
+        <a href="#" class="app-card placeholder">
+            <div class="app-card-icon">📓</div>
+            <h3>Journal</h3>
+            <p>Record your thoughts and progress.</p>
+        </a>
+
+        <a href="#" class="app-card placeholder">
+            <div class="app-card-icon">💰</div>
+            <h3>Finances</h3>
+            <p>Manage your budget and savings.</p>
+        </a>
+    </div>
+</div>
+{% endblock %}
