@@ -600,3 +600,97 @@ input:checked + .slider:before {
 .slider.round:before {
     border-radius: 50%;
 }
+/* =================================================================== */
+/* HAMBURGER NAVIGATION MENU
+/* =================================================================== */
+
+/* Hide hamburger on desktop by default */
+#hamburger-btn {
+    display: none;
+    z-index: 1001; /* Keep it above the overlay */
+}
+
+/* Style for the overlay that dims the page */
+#nav-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+    z-index: 998;
+}
+
+#mobile-nav {
+    display: flex;
+}
+
+/* When the menu is open, show the overlay */
+body.nav-open #nav-overlay {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Mobile-specific styles */
+@media (max-width: 768px) {
+    /* Hide the original row of icons */
+    .app-header .header-actions {
+        display: none;
+    }
+    
+    /* Show the hamburger button */
+    #hamburger-btn {
+        display: block;
+    }
+
+    /* Style the slide-out menu container */
+    #mobile-nav {
+        position: fixed;
+        top: 0;
+        right: -280px; /* Start off-screen */
+        width: 250px;
+        height: 100%;
+        background-color: var(--fg-color);
+        box-shadow: -4px 0 15px rgba(0, 0, 0, 0.2);
+        transition: transform 0.3s ease-in-out;
+        z-index: 999;
+        padding-top: 60px; /* Space for a close button if needed */
+        display: block;
+    }
+
+    /* This class will be toggled by JS to slide the menu in */
+    .nav-open #mobile-nav {
+        transform: translateX(-280px);
+    }
+    
+    /* Re-style the header actions to be a vertical list */
+    #mobile-nav .header-actions {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0;
+    }
+
+    /* Style the individual links in the menu */
+    .nav-link {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 1.5rem;
+        text-decoration: none;
+        color: var(--text-color);
+        font-weight: 500;
+        width: 100%;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .nav-link:hover {
+        background-color: var(--bg-color);
+    }
+    .nav-link img {
+        width: 24px;
+        height: 24px;
+    }
+}

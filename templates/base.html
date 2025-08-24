@@ -1,0 +1,25 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Stride Hub{% endblock %}</title> <link rel="icon" href="{% static 'Icons/favicon.ico' %}" type="image/x-icon">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+     {# Placeholder for page-specific stylesheets #}
+    {% block extra_styles %}{% endblock %}
+</head>
+<body>
+    <header>
+        </header>
+
+    <main>
+        {# This is the main content area that each sub-app page will fill in #}
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <script type="module" src="{% static 'js/app.js' %}"></script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 // This file handles all communication with the Django backend API.
 
-const API_URL = '/api/tasks/';
+const API_URL = '/api/stride/tasks/'; // <-- CORRECTED URL
 
 // Helper to get the CSRF token from cookies for secure requests
 function getCookie(name) {

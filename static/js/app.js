@@ -41,32 +41,58 @@ class StrideApp {
 
     setupEventListeners() {
         this.dom.body.addEventListener('click', this.handleGlobalClick.bind(this));
-        this.dom.taskList.addEventListener('click', this.handleTaskListClick.bind(this));
-        this.dom.modals.task.addEventListener('change', this.handleTaskModalChange.bind(this));
-        this.dom.modals.settings.addEventListener('click', this.handleSettingsClick.bind(this));
-        this.dom.modals.stats.addEventListener('click', this.handleStatsModalClick.bind(this));
-        this.dom.modals.developer.addEventListener('click', this.handleDeveloperModalClick.bind(this));
-        this.dom.taskList.addEventListener('dragstart', this.onDragStart.bind(this));
-        this.dom.taskList.addEventListener('dragend', this.onDragEnd.bind(this));
-        this.dom.taskList.addEventListener('dragover', this.onDragOver.bind(this));
-        this.dom.taskList.addEventListener('drop', this.onDrop.bind(this));
-        document.getElementById('habit-select')?.addEventListener('change', (e) => ui.renderHabitPerformanceChart(e.target.value));
-        document.getElementById('import-data-input').addEventListener('change', (e) => actions.importData(e));
         
-        let devClickCount = 0;
-        let devClickTimer = null;
-        this.dom.headerTitle.addEventListener('click', () => {
-            devClickCount++;
-            clearTimeout(devClickTimer);
-            devClickTimer = setTimeout(() => { devClickCount = 0; }, 2000);
-            if (devClickCount >= 5) {
-                state.settings.developerMode = !state.settings.developerMode;
-                saveSettingsToLocal();
-                ui.renderHeader();
-                ui.showToast(`Developer Mode ${state.settings.developerMode ? 'Enabled' : 'Disabled'}`);
-                devClickCount = 0;
-            }
-        });
+        // Only add listeners if the task list exists on the page
+        if (this.dom.taskList) {
+            this.dom.taskList.addEventListener('click', this.handleTaskListClick.bind(this));
+            this.dom.taskList.addEventListener('dragstart', this.onDragStart.bind(this));
+            this.dom.taskList.addEventListener('dragend', this.onDragEnd.bind(this));
+            this.dom.taskList.addEventListener('dragover', this.onDragOver.bind(this));
+            this.dom.taskList.addEventListener('drop', this.onDrop.bind(this));
+        }
+        
+        // Add listeners for modals if they exist
+        if (this.dom.modals.task) {
+            this.dom.modals.task.addEventListener('change', this.handleTaskModalChange.bind(this));
+        }
+        if (this.dom.modals.settings) {
+            this.dom.modals.settings.addEventListener('click', this.handleSettingsClick.bind(this));
+        }
+        if (this.dom.modals.stats) {
+            this.dom.modals.stats.addEventListener('click', this.handleStatsModalClick.bind(this));
+        }
+        if (this.dom.modals.developer) {
+            this.dom.modals.developer.addEventListener('click', this.handleDeveloperModalClick.bind(this));
+        }
+
+        // Safely add listeners for elements that might not be on every page
+        const habitSelect = document.getElementById('habit-select');
+        if (habitSelect) {
+            habitSelect.addEventListener('change', (e) => ui.renderHabitPerformanceChart(e.target.value));
+        }
+
+        const importInput = document.getElementById('import-data-input');
+        if (importInput) {
+            importInput.addEventListener('change', (e) => actions.importData(e));
+        }
+        
+        // Secret developer mode trigger
+        if (this.dom.headerTitle) {
+            let devClickCount = 0;
+            let devClickTimer = null;
+            this.dom.headerTitle.addEventListener('click', () => {
+                devClickCount++;
+                clearTimeout(devClickTimer);
+                devClickTimer = setTimeout(() => { devClickCount = 0; }, 2000);
+                if (devClickCount >= 5) {
+                    state.settings.developerMode = !state.settings.developerMode;
+                    saveSettingsToLocal();
+                    ui.renderHeader();
+                    ui.showToast(`Developer Mode ${state.settings.developerMode ? 'Enabled' : 'Disabled'}`);
+                    devClickCount = 0;
+                }
+            });
+        }
     }
     
     handleGlobalClick(e) {
@@ -222,7 +248,7 @@ class StrideApp {
                 ui.showToast("Achievement check complete.");
             },
             'dev-unlock-achievements': () => {
-                state.unlockedAchievements = Object.keys(ALL_ACHIEVEMENTS);
+                state.unlockedAchievements = Object.keys(actions.ALL_ACHIEVEMENTS);
                 saveSettingsToLocal();
                 ui.showToast("All achievements unlocked.");
             },
