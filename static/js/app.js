@@ -1,5 +1,5 @@
 import * as api from './api.js';
-import { loadSettingsFromLocal, setEditingTaskId, getTaskById, state, saveSettingsToLocal, ALL_ACHIEVEMENTS } from './state.js';
+import { loadSettingsFromLocal, setEditingTaskId, getTaskById, state, saveSettingsToLocal } from './state.js';
 import * as ui from './ui.js';
 import * as actions from './actions.js';
 
@@ -29,18 +29,17 @@ class StrideApp {
         loadSettingsFromLocal();
         ui.applyTheme();
 
-        const authToken = localStorage.getItem('authToken');
-        if (authToken) {
+        if (localStorage.getItem('authToken')) {
             try {
                 state.tasks = await api.getAllTasks();
                 console.log("Tasks loaded from server.");
             } catch (error) {
                 console.error("Failed to load tasks from server:", error);
-                // --- CORRECTED LOGIC ---
-                // We show an error but DON'T log the user out automatically.
-                // This will break the login loop.
-                ui.showToast("Could not load your data. Please try logging in again.");
-                localStorage.removeItem('authToken'); // Clear the potentially bad token
+                if (error.status === 401 || error.status === 403) {
+                    actions.handleLogout();
+                } else {
+                    ui.showToast("Could not load data from server.");
+                }
             }
         }
         
@@ -48,11 +47,19 @@ class StrideApp {
         
         if (window.location.pathname.includes('/stride/')) {
             ui.showPage('main-page');
+        } else if (window.location.pathname.includes('/profile/')) {
+            ui.showPage('profile-page');
         } else {
             ui.showPage('hub-page');
         }
 
         ui.render();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('next')) {
+            ui.openModal(this.dom.modals.login);
+        }
+
         this.registerServiceWorker();
     }
 
@@ -113,10 +120,6 @@ class StrideApp {
         const action = target.dataset.action;
         
         const actionMap = {
-            'change-password-submit': (event) => {
-            event.preventDefault();
-            actions.handleChangePassword();
-        },
             'show-login-modal': () => ui.openModal(this.dom.modals.login),
             'close-login-modal': () => ui.closeModal(this.dom.modals.login),
             'login-submit': (event) => { event.preventDefault(); actions.handleLogin(); },
@@ -124,6 +127,7 @@ class StrideApp {
             'show-reg-modal': () => ui.openModal(this.dom.modals.registration),
             'close-reg-modal': () => ui.closeModal(this.dom.modals.registration),
             'register-submit': (event) => { event.preventDefault(); actions.handleRegistration(); },
+            'change-password-submit': (event) => { event.preventDefault(); actions.handleChangePassword(); },
             'onboard-add': () => ui.openTaskModal(),
             'quick-add': () => ui.openTaskModal(),
             'change-day-prev': () => actions.changeDay(-1),
@@ -157,10 +161,6 @@ class StrideApp {
             'add-category': actions.addCategory,
             'close-developer': () => ui.closeModal(this.dom.modals.developer),
             'toggle-day': (e) => e.target.classList.toggle('active'),
-             'change-password-submit': (event) => {
-            event.preventDefault();
-            actions.handleChangePassword();
-        },
         };
 
         if (actionMap[action]) actionMap[action](e);
@@ -172,11 +172,13 @@ class StrideApp {
         const taskItem = e.target.closest('.task-item');
         if (!taskItem) return;
         if (taskItem.classList.contains('paused') && actionTarget.dataset.action !== 'edit') return;
+
         const id = parseInt(taskItem.dataset.id);
         const action = actionTarget.dataset.action;
         const task = getTaskById(id);
         if (!task) return;
         let history = task.history?.[state.currentDate] || { completed: false, measurableProgress: 0 };
+        
         switch (action) {
             case 'edit': setEditingTaskId(id); ui.openTaskModal(id); break;
             case 'complete': actions.completeTask(id, state.currentDate, !history.completed); break;

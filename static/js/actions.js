@@ -2,43 +2,26 @@ import { state, saveSettingsToLocal, getTaskById, updateTaskHistory, ALL_ACHIEVE
 import * as ui from './ui.js';
 import * as api from './api.js';
 
-// In actions.js
 
-// In static/js/actions.js
-export async function handleLogin() {
-    const username = document.getElementById('login-username').value;
-    const password = document.getElementById('login-password').value;
+export async function handleLogin(username, password) {
+    const user = username || document.getElementById('login-username').value;
+    const pass = password || document.getElementById('login-password').value;
 
     try {
-        const data = await api.loginUser(username, password);
+        const data = await api.loginUser(user, pass);
         localStorage.setItem('authToken', data.auth_token);
         
-        // Check for a 'next' parameter in the URL
         const urlParams = new URLSearchParams(window.location.search);
         const nextUrl = urlParams.get('next');
 
         if (nextUrl) {
-            // If it exists, redirect to that page
             window.location.href = nextUrl;
         } else {
-            // Otherwise, just reload the current page
             location.reload();
         }
     } catch (error) {
         console.error("Login failed:", error);
         ui.showToast(error.message);
-    }
-}
-
-export async function handleLogout() {
-    try {
-        await api.logoutUser();
-    } catch (error) {
-        console.error("Logout failed:", error);
-    } finally {
-        localStorage.removeItem('authToken');
-        ui.updateNavState(); // Update the nav
-        location.reload(); // Reload to clear user data
     }
 }
 
@@ -55,7 +38,6 @@ export async function handleRegistration() {
     try {
         await api.registerUser(username, email, password);
         ui.showToast("Registration successful! Logging you in...");
-        // Automatically log in the user after they register
         await handleLogin(username, password);
     } catch (error) {
         console.error("Registration failed:", error);
@@ -63,7 +45,39 @@ export async function handleRegistration() {
     }
 }
 
+export async function handleLogout() {
+    try {
+        await api.logoutUser();
+    } catch (error) {
+        console.error("Logout failed:", error);
+    } finally {
+        localStorage.removeItem('authToken');
+        window.location.href = '/'; // Always redirect to the hub on logout
+    }
+}
 
+export async function handleChangePassword() {
+    const currentPassword = document.getElementById('current-password').value;
+    const newPassword = document.getElementById('new-password').value;
+    const reNewPassword = document.getElementById('re-new-password').value;
+
+    if (!currentPassword || !newPassword || !reNewPassword) {
+        return ui.showToast("All password fields are required.");
+    }
+
+    if (newPassword !== reNewPassword) {
+        return ui.showToast("New passwords do not match.");
+    }
+
+    try {
+        await api.changePassword(currentPassword, newPassword, reNewPassword);
+        ui.showToast("Password changed successfully!");
+        document.getElementById('change-password-form').reset();
+    } catch (error) {
+        console.error("Password change failed:", error);
+        ui.showToast(error.message);
+    }
+}
 
 export async function saveTask() {
     const id = state.editingTaskId;
@@ -347,11 +361,8 @@ export function exportData() {
 }
 
 export function importData(event) {
-    // This function needs to be re-thought for a server-based app.
-    // A simple client-side import could overwrite server data.
-    // For now, we'll leave it as a placeholder.
     ui.showToast("Importing data is not yet supported in this version.");
-    event.target.value = ""; // Reset the file input
+    event.target.value = "";
 }
 
 export function recalculateStreaks(task) {
@@ -467,23 +478,4 @@ export function getWeeklyCompletions(task, date) {
         }
     }
     return completions;
-}
-// In static/js/actions.js
-export async function handleChangePassword() {
-    const currentPassword = document.getElementById('current-password').value;
-    const newPassword = document.getElementById('new-password').value;
-    const reNewPassword = document.getElementById('re-new-password').value;
-
-    if (newPassword !== reNewPassword) {
-        return ui.showToast("New passwords do not match.");
-    }
-
-    try {
-        await api.changePassword(currentPassword, newPassword, reNewPassword);
-        ui.showToast("Password changed successfully!");
-        document.getElementById('change-password-form').reset();
-    } catch (error) {
-        console.error("Password change failed:", error);
-        ui.showToast(error.message);
-    }
 }
