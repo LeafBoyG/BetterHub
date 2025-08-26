@@ -1,57 +1,53 @@
-// This file manages the application's data state.
-
-export const ALL_ACHIEVEMENTS = {
-    FIRST_STEP: { name: 'First Step', desc: 'Complete your very first task.', icon: '👟' },
-    STREAK_STARTER: { name: 'Streak Starter', desc: 'Achieve a 3-day streak.', icon: '🔥' },
-    WEEKLY_WARRIOR: { name: 'Weekly Warrior', desc: 'Achieve a 7-day streak.', icon: '🗓️' },
-    MONTHLY_MASTER: { name: 'Monthly Master', desc: 'Achieve a 30-day streak.', icon: '📅' },
-    DEDICATED: { name: 'Dedicated', desc: 'Log 50 total completions.', icon: '🎯' },
-    COMMITTED: { name: 'Committed', desc: 'Log 100 total completions.', icon: '💯' },
+// state.js
+let tasks = [];
+let settings = {
+  theme: "light",
+  vacationMode: false,
+  categories: [],
+  archivedTasks: [],
 };
+let journalEntries = [];
+let achievements = [];
+let editingTaskId = null;
 
-export let state = {
-    tasks: [],
-    categories: ['Fitness', 'Work', 'Self-Care', 'Home'],
-    currentDate: new Date().toDateString(),
-    settings: {
-        theme: 'light',
-        enableSound: true,
-        vacationMode: { active: false, start: null, end: null },
-        filter: { category: 'all' },
-        developerMode: false,
-    },
-    unlockedAchievements: [],
-    editingTaskId: null,
-    timer: { interval: null, taskId: null, endTime: null },
-};
+// =============== State Management ===============
 
-export function saveSettingsToLocal() {
-    localStorage.setItem('strideSettings', JSON.stringify(state.settings));
+// Tasks
+export function getTasks() {
+  return tasks;
+}
+export function setTasks(newTasks) {
+  tasks = newTasks;
 }
 
-export function loadSettingsFromLocal() {
-    const savedSettings = localStorage.getItem('strideSettings');
-    if (savedSettings) {
-        try {
-            const loaded = JSON.parse(savedSettings);
-            state.settings = { ...state.settings, ...loaded };
-        } catch (e) {
-            console.error("Failed to parse settings from localStorage.");
-        }
-    }
+// Settings
+export function getSettings() {
+  return settings;
+}
+export function setSettings(newSettings) {
+  settings = newSettings;
 }
 
+// Journal
+export function getJournalEntries() {
+  return journalEntries;
+}
+export function setJournalEntries(newEntries) {
+  journalEntries = newEntries;
+}
+
+// Achievements
+export function getAchievements() {
+  return achievements;
+}
+export function setAchievements(newAchievements) {
+  achievements = newAchievements;
+}
+
+// Editing Task ID
 export function setEditingTaskId(id) {
-    state.editingTaskId = id;
+  editingTaskId = id;
 }
-
-export function getTaskById(id) {
-    return state.tasks.find(t => t.id === id);
-}
-
-export function updateTaskHistory(id, dateString, newHistoryData) {
-    const task = getTaskById(id);
-    if (!task) return;
-    if (!task.history) task.history = {};
-    task.history[dateString] = { ...(task.history[dateString] || {}), ...newHistoryData };
+export function getEditingTaskId() {
+  return editingTaskId;
 }

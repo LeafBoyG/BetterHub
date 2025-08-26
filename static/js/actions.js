@@ -2,6 +2,69 @@ import { state, saveSettingsToLocal, getTaskById, updateTaskHistory, ALL_ACHIEVE
 import * as ui from './ui.js';
 import * as api from './api.js';
 
+// In actions.js
+
+// In static/js/actions.js
+export async function handleLogin() {
+    const username = document.getElementById('login-username').value;
+    const password = document.getElementById('login-password').value;
+
+    try {
+        const data = await api.loginUser(username, password);
+        localStorage.setItem('authToken', data.auth_token);
+        
+        // Check for a 'next' parameter in the URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const nextUrl = urlParams.get('next');
+
+        if (nextUrl) {
+            // If it exists, redirect to that page
+            window.location.href = nextUrl;
+        } else {
+            // Otherwise, just reload the current page
+            location.reload();
+        }
+    } catch (error) {
+        console.error("Login failed:", error);
+        ui.showToast(error.message);
+    }
+}
+
+export async function handleLogout() {
+    try {
+        await api.logoutUser();
+    } catch (error) {
+        console.error("Logout failed:", error);
+    } finally {
+        localStorage.removeItem('authToken');
+        ui.updateNavState(); // Update the nav
+        location.reload(); // Reload to clear user data
+    }
+}
+
+export async function handleRegistration() {
+    const username = document.getElementById('reg-username').value;
+    const email = document.getElementById('reg-email').value;
+    const password = document.getElementById('reg-password').value;
+    const password2 = document.getElementById('reg-password2').value;
+
+    if (password !== password2) {
+        return ui.showToast("Passwords do not match.");
+    }
+
+    try {
+        await api.registerUser(username, email, password);
+        ui.showToast("Registration successful! Logging you in...");
+        // Automatically log in the user after they register
+        await handleLogin(username, password);
+    } catch (error) {
+        console.error("Registration failed:", error);
+        ui.showToast(error.message);
+    }
+}
+
+
+
 export async function saveTask() {
     const id = state.editingTaskId;
     const name = document.getElementById('task-name').value.trim();
@@ -57,20 +120,16 @@ export async function completeTask(id, dateString, isComplete) {
     if (!task) return;
     const wasCompleted = task.history?.[dateString]?.completed || false;
     
-    // 1. OPTIMISTIC UPDATE: Change the state locally first.
     updateTaskHistory(id, dateString, { completed: isComplete });
     if (task.task_type === 'habit' && task.recurrence.type === 'days') {
         recalculateStreaks(task); 
     }
     
-    // 2. INSTANT RENDER: Update the UI immediately.
     ui.render(); 
     ui.playSound(isComplete ? 'complete' : 'uncomplete');
-
-    // 3. SYNC: Now, try to save the change to the server.
+    
     try {
         await api.updateTask(task.id, task);
-        // Post-completion actions happen only if the save was successful
         if (!wasCompleted && isComplete) { 
             checkAchievements(); 
             ui.openNotePromptModal(id, dateString); 
@@ -78,13 +137,9 @@ export async function completeTask(id, dateString, isComplete) {
     } catch (error) {
         console.error("Failed to save task update:", error);
         ui.showToast("Error syncing progress.");
-        
-        // 4. HANDLE FAILURE: Revert the state and re-render.
-        updateTaskHistory(id, dateString, { completed: wasCompleted }); 
-        if (task.task_type === 'habit' && task.recurrence.type === 'days') {
-            recalculateStreaks(task);
-        }
-        ui.render(); // Re-render to show the reverted (unchanged) state.
+        updateTaskHistory(id, dateString, { completed: wasCompleted });
+        if (task.task_type === 'habit' && task.recurrence.type === 'days') recalculateStreaks(task);
+        ui.render();
     }
 }
 
@@ -95,13 +150,13 @@ export async function failTask(id, dateString, isCurrentlyFailed) {
 
     updateTaskHistory(id, dateString, { failed: didFail });
     if (task.task_type === 'habit') recalculateStreaks(task);
-    ui.render(); // Optimistic render
+    ui.render();
 
     try {
         await api.updateTask(task.id, task);
     } catch(e) {
         ui.showToast("Error syncing progress");
-        updateTaskHistory(id, dateString, { failed: !didFail }); // Revert
+        updateTaskHistory(id, dateString, { failed: !didFail });
         if (task.task_type === 'habit') recalculateStreaks(task);
         ui.render();
     }
@@ -130,13 +185,13 @@ export async function archiveTask() {
     const task = getTaskById(id);
     if (task) {
         task.archived = true;
-        ui.render(); // Optimistic
+        ui.render();
         try {
             await api.updateTask(id, task);
             ui.closeModal(document.getElementById('task-modal'));
         } catch(e) {
             ui.showToast("Error archiving task");
-            task.archived = false; // Revert
+            task.archived = false;
             ui.render();
         }
     }
@@ -146,19 +201,19 @@ export async function unarchiveTask(id) {
     const task = getTaskById(id);
     if (task) {
         task.archived = false;
-        ui.renderArchivedList(); // Optimistic
+        ui.renderArchivedList();
         ui.render();
         try {
             await api.updateTask(id, task);
         } catch(e) {
             ui.showToast("Error unarchiving task");
-            task.archived = true; // Revert
+            task.archived = true;
             ui.renderArchivedList();
             ui.render();
         }
     }
 }
-
+        
 export async function savePromptNote() {
     const id = parseInt(document.getElementById('prompt-task-id').value);
     const dateString = document.getElementById('prompt-date-string').value;
@@ -180,10 +235,10 @@ export async function savePromptNote() {
         ui.render();
     }
 }
-
+        
 export async function onDrop() {
     const newOrderedIds = [...document.getElementById('task-list').querySelectorAll('.task-item')].map(item => parseInt(item.dataset.id));
-    const oldTasksState = JSON.parse(JSON.stringify(state.tasks)); // Deep copy for revert
+    const oldTasksState = JSON.parse(JSON.stringify(state.tasks));
     const idToTaskMap = new Map(state.tasks.map(task => [task.id, task]));
     
     const updatePromises = [];
@@ -200,7 +255,7 @@ export async function onDrop() {
     } catch(e) {
         console.error("Failed to save new order", e);
         ui.showToast("Error saving new order");
-        state.tasks = oldTasksState; // Revert
+        state.tasks = oldTasksState;
     }
     ui.render();
 }
@@ -242,7 +297,7 @@ export function changeDay(direction) {
     state.currentDate = d.toDateString();
     ui.render();
 }
-
+        
 export function startTimer(id, minutes) {
     if (state.timer.interval) clearInterval(state.timer.interval);
     const endTime = Date.now() + minutes * 60 * 1000;
@@ -292,27 +347,11 @@ export function exportData() {
 }
 
 export function importData(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    if (!confirm("This will overwrite all current data. Are you sure you want to continue?")) {
-        event.target.value = ""; return;
-    }
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        try {
-            const importedState = JSON.parse(e.target.result);
-            if (importedState && importedState.tasks && importedState.settings) {
-                ui.showToast("Importing data with a server backend is not yet supported.");
-            } else {
-                alert("Invalid or corrupted backup file.");
-            }
-        } catch (error) {
-            console.error("Error parsing imported file:", error);
-            alert("Could not import the file. It may be corrupted.");
-        }
-    };
-    reader.readAsText(file);
-    event.target.value = "";
+    // This function needs to be re-thought for a server-based app.
+    // A simple client-side import could overwrite server data.
+    // For now, we'll leave it as a placeholder.
+    ui.showToast("Importing data is not yet supported in this version.");
+    event.target.value = ""; // Reset the file input
 }
 
 export function recalculateStreaks(task) {
@@ -428,4 +467,23 @@ export function getWeeklyCompletions(task, date) {
         }
     }
     return completions;
+}
+// In static/js/actions.js
+export async function handleChangePassword() {
+    const currentPassword = document.getElementById('current-password').value;
+    const newPassword = document.getElementById('new-password').value;
+    const reNewPassword = document.getElementById('re-new-password').value;
+
+    if (newPassword !== reNewPassword) {
+        return ui.showToast("New passwords do not match.");
+    }
+
+    try {
+        await api.changePassword(currentPassword, newPassword, reNewPassword);
+        ui.showToast("Password changed successfully!");
+        document.getElementById('change-password-form').reset();
+    } catch (error) {
+        console.error("Password change failed:", error);
+        ui.showToast(error.message);
+    }
 }

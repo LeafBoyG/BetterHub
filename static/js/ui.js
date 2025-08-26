@@ -1,26 +1,44 @@
-import { state, ALL_ACHIEVEMENTS, getTaskById } from './state.js';
+import { state, ALL_ACHIEVEMENTS, getTaskById, setEditingTaskId } from './state.js';
 import { getWeeklyCompletions, recalculateStreaks } from './actions.js';
+
 let habitChartInstance = null;
 let categoryChartInstance = null;
 
-// --- UTILITY UI FUNCTIONS ---
+// ===================================================================
+// UTILITY UI FUNCTIONS
+// ===================================================================
 
 export function showPage(pageId) {
-    document.querySelectorAll('.page').forEach(page => {
-        if (page) page.style.display = page.id === pageId ? 'block' : 'none';
-    });
-    const quickAddBtn = document.getElementById('quick-add-btn');
-    quickAddBtn.style.display = 'block';
+    const pages = {
+        'main-page': document.getElementById('main-page'),
+        'dashboard-page': document.getElementById('dashboard-page'),
+        'journal-page': document.getElementById('journal-page'),
+        'calendar-page': document.getElementById('calendar-page'),
+        'hub-page': document.querySelector('.hub-grid'),
+        'profile-page': document.querySelector('.profile-container'),
+    };
 
+    Object.values(pages).forEach(page => {
+        if (page) page.style.display = 'none';
+    });
+
+    if (pages[pageId]) {
+        pages[pageId].style.display = (pageId === 'hub-page' || pageId === 'profile-page') ? 'block' : 'block';
+    }
+
+    const quickAddBtn = document.getElementById('quick-add-btn');
+    if (quickAddBtn) {
+        if (pageId === 'main-page' || window.location.pathname.includes('/stride/')) {
+            quickAddBtn.style.display = 'block';
+        } else {
+            quickAddBtn.style.display = 'none';
+        }
+    }
+    
     if (pageId === 'dashboard-page') {
         renderDashboard();
-        quickAddBtn.style.display = 'none';
     } else if (pageId === 'journal-page') {
         renderJournal();
-        quickAddBtn.style.display = 'none';
-    } else if (pageId === 'calendar-page') {
-        // renderCalendar(); // Future function
-        quickAddBtn.style.display = 'none';
     }
 }
 
@@ -30,6 +48,7 @@ export function applyTheme() {
 
 export function showToast(message) {
     const toast = document.getElementById('toast-notification');
+    if (!toast) return;
     toast.textContent = message;
     toast.className = "toast show";
     setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
@@ -42,25 +61,48 @@ export function openModal(modal) {
 export function closeModal(modal) {
     if (modal) modal.style.display = 'none';
 }
-// Add this entire function inside ui.js
-function getWeeklyProgressUI(task, viewDate) {
-    if (task.recurrence?.type !== 'weekly') return { ui: '', isComplete: false };
-    const weeklyCompletions = getWeeklyCompletions(task, viewDate);
-    const weeklyGoal = task.recurrence.timesPerWeek;
-    const isComplete = weeklyCompletions >= weeklyGoal;
-    const ui = `<div class="weekly-progress">[ ${weeklyCompletions} / ${weeklyGoal} ]</div>`;
-    return { ui, isComplete };
+
+export function playSound(soundFile) {
+    if (!state.settings.enableSound) return;
+    try { 
+        new Audio(`/static/audio/${soundFile}.mp3`).play(); 
+    } catch (e) { 
+        console.warn("Could not play sound", e); 
+    }
 }
-// --- MAIN RENDER FUNCTIONS ---
+
+export function updateNavState() {
+    const loggedInNav = document.getElementById('logged-in-nav');
+    const loggedOutNav = document.getElementById('logged-out-nav');
+    const welcomeMessage = document.getElementById('welcome-message');
+    const authToken = localStorage.getItem('authToken');
+
+    if (authToken) {
+        if (loggedInNav) loggedInNav.style.display = 'flex';
+        if (loggedOutNav) loggedOutNav.style.display = 'none';
+        if(welcomeMessage) welcomeMessage.textContent = `Welcome!`; // Placeholder
+    } else {
+        if (loggedInNav) loggedInNav.style.display = 'none';
+        if (loggedOutNav) loggedOutNav.style.display = 'flex';
+    }
+}
+
+// ===================================================================
+// RENDERING FUNCTIONS
+// ===================================================================
 
 export function render() {
-    renderHeader();
-    renderTasks();
-    renderSidebar();
+    if (document.getElementById('task-list')) {
+        renderHeader();
+        renderTasks();
+        renderSidebar();
+    }
+    updateNavState(); // Always update nav on any render
 }
 
 export function renderHeader() {
     const headerActions = document.getElementById('header-actions');
+    if (!headerActions) return;
     headerActions.innerHTML = `
         <button data-action="show-journal" class="icon-btn" title="Journal"><img src="/static/Icons/JournalIcon.svg" alt="Journal"></button>
         <button data-action="show-dashboard" class="icon-btn" title="Dashboard"><img src="/static/Icons/DashboardIcon.svg" alt="Dashboard"></button>
@@ -74,16 +116,22 @@ export function renderHeader() {
     
     const viewDate = new Date(state.currentDate);
     const today = new Date();
-    document.getElementById('header-title').textContent = viewDate.toDateString() === today.toDateString() ? 'Today' : viewDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
-    document.getElementById('next-day-btn').disabled = viewDate.toDateString() === today.toDateString();
+    const headerTitle = document.getElementById('header-title');
+    if (headerTitle) {
+        headerTitle.textContent = viewDate.toDateString() === today.toDateString() ? 'Today' : viewDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+    }
+    const nextDayBtn = document.getElementById('next-day-btn');
+    if(nextDayBtn) {
+        nextDayBtn.disabled = viewDate.toDateString() === today.toDateString();
+    }
 }
 
 export function renderTasks() {
     const taskList = document.getElementById('task-list');
+    if (!taskList) return;
     const viewDate = new Date(state.currentDate);
     const viewDay = viewDate.getDay();
     const { filter } = state.settings;
-
     const tasksToDisplay = state.tasks
         .filter(task => {
             if (task.archived) return false;
@@ -96,8 +144,7 @@ export function renderTasks() {
             return false;
         })
         .sort((a, b) => a.order - b.order);
-
-    if (state.tasks.length === 0) {
+    if (localStorage.getItem('authToken') && state.tasks.length === 0) {
         taskList.innerHTML = `
             <div class="empty-state-onboarding">
                 <div class="onboarding-icon">✨</div>
@@ -117,26 +164,21 @@ function createTaskElement(task, viewDate) {
     const history = task.history?.[dateString] || {};
     const isNegative = task.nature === 'negative';
     const isPausedToday = task.pause?.active && new Date(task.pause.until) >= new Date(dateString);
-
     let classes = ['task-item'];
     if (isPausedToday) classes.push('paused');
-    
     let streakDisplay = (task.task_type === 'habit' && task.streak > 0) ? `<div class="streak-display"><img src="/static/Icons/Streak Icon.svg" alt="Streak"><span>${task.streak}</span></div>` : '';
     const noteIndicator = history.note ? `<span class="note-indicator">📝</span>` : '';
     const description = `<p>${task.description || ''}</p>`;
     const title = `<h3 data-action="edit">${task.name}${noteIndicator}</h3>`;
     const editButton = `<button class="edit-task-btn" data-action="edit"><img src="/static/Icons/Edit Icon.svg" alt="Edit"></button>`;
-
     let trackingUI = '';
-    
     if (isNegative) {
         if (history.failed) classes.push('failed');
         trackingUI = `<div class="task-details">${title}<p>${task.description || 'Goal: Avoid this today.'}</p></div><div class="task-actions">${streakDisplay}<button class="failure-btn" data-action="fail">${history.failed ? 'Undo Slip-up' : 'I Slipped Up'}</button>${editButton}</div>`;
     } else {
         const weeklyProgress = getWeeklyProgressUI(task, viewDate);
-        if(weeklyProgress.isComplete) classes.push('week-complete', 'completed');
-        else if(history.completed) classes.push('completed');
-
+        if (weeklyProgress.isComplete) classes.push('week-complete', 'completed');
+        else if (history.completed) classes.push('completed');
         switch (task.trackingType) {
             case 'measurable':
                 const progress = history.measurableProgress || 0;
@@ -145,13 +187,12 @@ function createTaskElement(task, viewDate) {
             case 'timed':
                 trackingUI = `<div class="task-details-measurable">${title}<button class="timer-btn" data-action="startTimer">Start ${task.timedGoal} min</button>${weeklyProgress.ui}</div>`;
                 break;
-            default: // completion
+            default:
                 trackingUI = `<button class="completion-button" data-action="complete"></button><div class="task-details">${title}${description}${weeklyProgress.ui}</div>`;
                 break;
         }
         trackingUI += `<div class="task-actions">${streakDisplay}${editButton}</div>`;
     }
-
     return `<div class="${classes.join(' ')}" draggable="true" style="border-left-color: ${task.color};" data-id="${task.id}">${trackingUI}</div>`;
 }
 
@@ -173,7 +214,6 @@ export function renderSidebar() {
 export function renderJournal() {
     const timeline = document.getElementById('journal-timeline');
     if (!timeline) return;
-
     const allNotes = [];
     state.tasks.forEach(task => {
         if(task.history) {
@@ -189,9 +229,7 @@ export function renderJournal() {
             }
         }
     });
-
     allNotes.sort((a,b) => b.date - a.date);
-
     if (allNotes.length > 0) {
         timeline.innerHTML = allNotes.map(entry => `
             <div class="journal-entry" style="border-left-color: ${entry.taskColor};">
@@ -364,6 +402,7 @@ export function renderHeatmap() {
 
 export function renderHabitPerformanceChart(taskId = null) {
     const habitSelect = document.getElementById('habit-select');
+    if (!habitSelect) return;
     const habits = state.tasks.filter(t => t.task_type === 'habit' && !t.archived && t.nature !== 'negative');
     const currentSelectedValue = habitSelect.value;
     habitSelect.innerHTML = '<option value="">-- Select a Habit --</option>';
@@ -439,6 +478,7 @@ export function renderAchievements() {
 
 export function renderStatistics() {
     const statsList = document.getElementById('stats-list');
+    if (!statsList) return;
     const habits = state.tasks.filter(t => t.task_type === 'habit' && !t.archived && t.nature !== 'negative');
     const totalCompletions = habits.reduce((sum, task) => sum + Object.values(task.history).filter(h => h.completed).length, 0);
     
@@ -477,10 +517,10 @@ export function renderStatistics() {
 }
 
 export function openTaskModal(id = null) {
-    state.editingTaskId = id;
+    setEditingTaskId(id);
     const task = id ? getTaskById(id) : { recurrence: { type: 'days', days: [] }, color: '#5e72e4' };
     
-    document.getElementById('modal-title').innerText = id ? 'Edit Task' : 'New Task';
+    document.getElementById('modal-title').innerText = id ? 'Edit Habit' : 'New Habit';
     document.getElementById('task-name').value = task.name || '';
     document.getElementById('task-desc').value = task.description || '';
     
@@ -573,4 +613,17 @@ export function openFilterModal() {
 export function openDeveloperModal() {
     document.getElementById('developer-state-view').textContent = JSON.stringify(state, null, 2);
     openModal(document.getElementById('developer-modal'));
+}
+
+// ===================================================================
+// UI HELPER FUNCTIONS
+// ===================================================================
+
+function getWeeklyProgressUI(task, viewDate) {
+    if (task.recurrence?.type !== 'weekly') return { ui: '', isComplete: false };
+    const weeklyCompletions = getWeeklyCompletions(task, viewDate);
+    const weeklyGoal = task.recurrence.timesPerWeek;
+    const isComplete = weeklyCompletions >= weeklyGoal;
+    const ui = `<div class="weekly-progress">[ ${weeklyCompletions} / ${weeklyGoal} ]</div>`;
+    return { ui, isComplete };
 }

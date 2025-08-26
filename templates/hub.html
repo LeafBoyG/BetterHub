@@ -7,6 +7,21 @@
     <link rel="stylesheet" href="{% static 'css/hub.css' %}">
 {% endblock %}
 
+{% block top_nav %}
+   <div class="hub-nav">
+    <div id="logged-in-nav" style="display: none;">
+        <span id="welcome-message"></span>
+        <a href="{% url 'profile' %}" class="btn-secondary">Profile</a>
+        <a href="#" data-action="logout" class="btn-secondary">Logout</a>
+    </div>
+
+    <div id="logged-out-nav">
+        <button class="btn-secondary" data-action="show-reg-modal">Register</button>
+        <button class="btn-primary" data-action="show-login-modal">Login</button>
+    </div>
+</div>
+{% endblock %}
+
 {% block content %}
 <div class="page-content-wrapper">
     <div class="dashboard-header">

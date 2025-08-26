@@ -1,317 +1,342 @@
-{% extends 'base.html' %}
 {% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stride</title>
+    <link rel="icon" href="{% static 'Icons/favicon.ico' %}" type="image/x-icon">
 
-{% block title %}Stride Habit Tracker{% endblock %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-{% block content %}
-
-<header class="app-header-desktop">
-    <div class="header-content">
-        <a href="{% url 'hub' %}" id="back-to-hub-btn" class="icon-btn">‹ Back to Hub</a>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+</head>
+<body>
+    <div id="main-page" class="page">
+        <div class="app-container">
+            <div class="desktop-grid">
+                <main class="main-content">
+                    <header class="app-header">
+    <div class="date-navigator">
+        <button id="prev-day-btn" class="icon-btn" data-action="change-day-prev">‹</button>
+        <h1 id="header-title">Today</h1>
+        <button id="next-day-btn" class="icon-btn" data-action="change-day-next">›</button>
     </div>
+
+    <button id="hamburger-btn" class="icon-btn">
+        <img src="{% static 'Icons/MenuIcon.svg' %}" alt="Menu">
+    </button>
+
+    <nav id="mobile-nav">
+        <div id="header-actions" class="header-actions">
+            <a href="#" class="nav-link" data-action="show-journal"><img src="{% static 'Icons/JournalIcon.svg' %}" alt="Journal"><span>Journal</span></a>
+            <a href="#" class="nav-link" data-action="show-dashboard"><img src="{% static 'Icons/DashboardIcon.svg' %}" alt="Dashboard"><span>Dashboard</span></a>
+            <a href="#" class="nav-link" data-action="show-achievements"><img src="{% static 'Icons/AwardIcon.svg' %}" alt="Achievements"><span>Achievements</span></a>
+            <a href="#" class="nav-link" data-action="show-stats"><img src="{% static 'Icons/Statistics icon.svg' %}" alt="Statistics"><span>Statistics</span></a>
+            <a href="#" class="nav-link" data-action="show-calendar"><img src="{% static 'Icons/CalendarIcon.svg' %}" alt="Calendar"><span>Calendar</span></a>
+            <a href="#" class="nav-link" data-action="show-filter"><img src="{% static 'Icons/Search Icon.svg' %}" alt="Filter"><span>Filter</span></a>
+            <a href="#" class="nav-link" data-action="show-settings"><img src="{% static 'Icons/Settingsicon.svg' %}" alt="Settings"><span>Settings</span></a>
+        </div>
+    </nav>
+    <div id="nav-overlay"></div>
 </header>
-
-<div id="main-page" class="page">
-    <div class="app-container">
-        <div class="desktop-grid">
-            <main class="main-content">
-                <header class="app-header">
-                    <div class="date-navigator">
-                        <button id="prev-day-btn" class="icon-btn" data-action="change-day-prev">‹</button>
-                        <h1 id="header-title">Today</h1>
-                        <button id="next-day-btn" class="icon-btn" data-action="change-day-next">›</button>
-                    </div>
-                    <div id="header-actions" class="header-actions">
-                        <button class="icon-btn" data-action="show-journal"><img src="{% static 'Icons/JournalIcon.svg' %}" alt="Journal"></button>
-                        <button class="icon-btn" data-action="show-dashboard"><img src="{% static 'Icons/DashboardIcon.svg' %}" alt="Dashboard"></button>
-                        <button class="icon-btn" data-action="show-achievements"><img src="{% static 'Icons/AwardIcon.svg' %}" alt="Achievements"></button>
-                        <button class="icon-btn" data-action="show-filter"><img src="{% static 'Icons/Search Icon.svg' %}" alt="Filter"></button>
-                        <button class="icon-btn" data-action="show-stats"><img src="{% static 'Icons/Statistics icon.svg' %}" alt="Statistics"></button>
-                        <button class="icon-btn" data-action="show-settings"><img src="{% static 'Icons/Settingsicon.svg' %}" alt="Settings"></button>
-                        <button class="icon-btn" data-action="show-calendar"><img src="{% static 'Icons/CalendarIcon.svg' %}" alt="Calendar"></button>
-                    </div>
-                </header>
-                <div id="task-list" class="task-list-container"></div>
-            </main>
-            <aside id="overview-sidebar" class="overview-sidebar"></aside>
+                    <div id="task-list" class="task-list-container"></div>
+                </main>
+                <aside id="overview-sidebar" class="overview-sidebar"></aside>
+            </div>
         </div>
     </div>
-</div>
 
-<div id="calendar-page" class="page" style="display: none;">
-    <header class="app-header-desktop">
-        <div class="header-content">
-            <a href="{% url 'stride-app' %}" class="icon-btn">‹ Back to Habits</a>
-        </div>
-    </header>
-    <div class="page-content-wrapper">
-        <div class="dashboard-header">
-            <h2>Your Activity Calendar</h2>
-            <p>A visual timeline of your habit completions.</p>
-        </div>
-        <div id="calendar-container" class="calendar-container sidebar-widget">
-            <div id="calendar-header" class="calendar-header">
-                <button id="calendar-prev-month-btn" class="icon-btn">‹</button>
-                <h3 id="calendar-month-year"></h3>
-                <button id="calendar-next-month-btn" class="icon-btn">›</button>
+    <div id="calendar-page" class="page" style="display: none;">
+        <header class="app-header-desktop">
+            <div class="header-content">
+                <button id="back-to-main-from-calendar-btn" class="icon-btn" data-action="show-main">‹ Back to Habits</button>
             </div>
-            <div class="calendar-weekdays">
-                <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+        </header>
+        <div class="page-content-wrapper">
+            <div class="dashboard-header">
+                <h2>Your Activity Calendar</h2>
+                <p>A visual timeline of your habit completions.</p>
             </div>
-            <div id="calendar-grid" class="calendar-grid"></div>
-        </div>
-    </div>
-</div>
-
-<button id="quick-add-btn" class="quick-add-btn" data-action="quick-add">+</button>
-    
-<div id="journal-page" class="page" style="display: none;">
-    <header class="app-header-desktop">
-        <div class="header-content">
-            <a href="{% url 'stride-app' %}" class="icon-btn">‹ Back to Habits</a>
-        </div>
-    </header>
-    <div class="page-content-wrapper">
-        <div class="dashboard-header">
-            <h2>Your Journal</h2>
-            <p>A timeline of your thoughts and progress on your journey.</p>
-        </div>
-        <div id="journal-timeline" class="journal-timeline"></div>
-    </div>
-</div>
-
-<div id="dashboard-page" class="page" style="display: none;">
-    <header class="app-header-desktop">
-        <div class="header-content">
-            <a href="{% url 'stride-app' %}" class="icon-btn">‹ Back to Habits</a>
-        </div>
-    </header>
-    <div class="page-content-wrapper">
-        <div class="dashboard-header">
-            <h2>Your Progress</h2>
-            <p>An overview of your progress and consistency over time.</p>
-        </div>
-        <div class="dashboard-grid-content">
-            <div id="stats-widget" class="dashboard-widget"></div>
-            <div id="category-widget" class="dashboard-widget">
-                <h3>Category Breakdown</h3>
-                <canvas id="category-chart"></canvas>
-            </div>
-            <div id="performance-widget" class="dashboard-widget">
-                <h3>30-Day Habit Performance</h3>
-                <div class="input-group">
-                    <label for="habit-select">Select a Habit to Analyze</label>
-                    <select id="habit-select"></select>
+            <div id="calendar-container" class="calendar-container sidebar-widget">
+                <div id="calendar-header" class="calendar-header">
+                    <button id="calendar-prev-month-btn" class="icon-btn">‹</button>
+                    <h3 id="calendar-month-year"></h3>
+                    <button id="calendar-next-month-btn" class="icon-btn">›</button>
                 </div>
-                <canvas id="habit-performance-chart"></canvas>
-            </div>
-            <div id="streaks-widget" class="dashboard-widget">
-                <h3>Active Streaks</h3>
-                <div id="dashboard-streaks-list"></div>
-            </div>
-            <div id="heatmap-widget" class="dashboard-widget">
-                <h3>Last Year's Completion Heatmap</h3>
-                <div id="heatmap-container"></div>
-            </div>
-            <div id="achievements-widget" class="dashboard-widget">
-                <h3>Recent Achievements</h3>
-                <div id="dashboard-achievements-list"></div>
+                <div class="calendar-weekdays">
+                    <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+                </div>
+                <div id="calendar-grid" class="calendar-grid"></div>
             </div>
         </div>
     </div>
-</div>
 
-<div id="task-modal" class="modal-overlay" style="display: none;">
-    <div class="modal-content">
-        <h2 id="modal-title">Edit Task</h2>
-        <div class="input-group"><input type="text" id="task-name" placeholder="Habit or Task Name"></div>
-        <div class="input-group"><textarea id="task-desc" placeholder="Description (optional)"></textarea></div>
-        <div id="note-container" class="input-group" style="display: none;">
-            <label for="task-note" id="task-note-label">Note</label>
-            <textarea id="task-note" placeholder="Add a note..."></textarea>
+    <button id="quick-add-btn" class="quick-add-btn" data-action="quick-add">+</button>
+    
+    <div id="journal-page" class="page" style="display: none;">
+        <header class="app-header-desktop">
+            <div class="header-content">
+                <button id="back-to-main-from-journal-btn" class="icon-btn" data-action="show-main">‹ Back to Habits</button>
+            </div>
+        </header>
+        <div class="page-content-wrapper">
+            <div class="dashboard-header">
+                <h2>Your Journal</h2>
+                <p>A timeline of your thoughts and progress on your journey.</p>
+            </div>
+            <div id="journal-timeline" class="journal-timeline"></div>
         </div>
-        <div class="input-group"><label>Type</label><select id="task-type"><option value="habit">Habit</option><option value="task">One-Day Task</option></select></div>
-        <div id="habit-nature-options" class="input-group">
-            <label>Habit Goal</label>
-            <select id="habit-nature">
-                <option value="positive">Build a good habit (Do this)</option>
-                <option value="negative">Break a bad habit (Don't do this)</option>
-            </select>
+    </div>
+
+    <div id="dashboard-page" class="page" style="display: none;">
+        <header class="app-header-desktop">
+            <div class="header-content">
+                <button id="back-to-main-btn" class="icon-btn" data-action="show-main">‹ Back to Habits</button>
+            </div>
+        </header>
+        <div class="page-content-wrapper">
+            <div class="dashboard-header">
+                <h2>Your Progress</h2>
+                <p>An overview of your progress and consistency over time.</p>
+            </div>
+            <div class="dashboard-grid-content">
+                <div id="stats-widget" class="dashboard-widget"></div>
+                <div id="category-widget" class="dashboard-widget">
+                    <h3>Category Breakdown</h3>
+                    <canvas id="category-chart"></canvas>
+                </div>
+                <div id="performance-widget" class="dashboard-widget">
+                    <h3>30-Day Habit Performance</h3>
+                    <div class="input-group">
+                        <label for="habit-select">Select a Habit to Analyze</label>
+                        <select id="habit-select"></select>
+                    </div>
+                    <canvas id="habit-performance-chart"></canvas>
+                </div>
+                <div id="streaks-widget" class="dashboard-widget">
+                    <h3>Active Streaks</h3>
+                    <div id="dashboard-streaks-list"></div>
+                </div>
+                <div id="heatmap-widget" class="dashboard-widget">
+                    <h3>Last Year's Completion Heatmap</h3>
+                    <div id="heatmap-container"></div>
+                </div>
+                <div id="achievements-widget" class="dashboard-widget">
+                    <h3>Recent Achievements</h3>
+                    <div id="dashboard-achievements-list"></div>
+                </div>
+            </div>
         </div>
-        <div class="input-group"><label>Tracking</label><select id="task-tracking-type"><option value="completion">Checkmark</option><option value="measurable">Measurable (e.g., 5 glasses)</option><option value="timed">Timed (e.g., 15 mins)</option></select></div>
-        <div id="measurable-options" class="input-group" style="display: none;"><label>Goal</label><input type="number" id="task-measurable-goal" placeholder="e.g., 8"></div>
-        <div id="timed-options" class="input-group" style="display: none;"><label>Minutes</label><input type="number" id="task-timed-goal" placeholder="e.g., 15"></div>
-        <div id="recurrence-options">
-            <div class="input-group">
-                <label>Repeat</label>
-                <select id="recurrence-type">
-                    <option value="days">Specific days of the week</option>
-                    <option value="weekly">Certain times per week</option>
+    </div>
+
+    <div id="task-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2 id="modal-title">Edit Task</h2>
+            <div class="input-group"><input type="text" id="task-name" placeholder="Habit or Task Name"></div>
+            <div class="input-group"><textarea id="task-desc" placeholder="Description (optional)"></textarea></div>
+            <div id="note-container" class="input-group" style="display: none;">
+                <label for="task-note" id="task-note-label">Note</label>
+                <textarea id="task-note" placeholder="Add a note..."></textarea>
+            </div>
+            <div class="input-group"><label>Type</label><select id="task-type"><option value="habit">Habit</option><option value="task">One-Day Task</option></select></div>
+            
+            <div id="habit-nature-options" class="input-group">
+                <label>Habit Goal</label>
+                <select id="habit-nature">
+                    <option value="positive">Build a good habit (Do this)</option>
+                    <option value="negative">Break a bad habit (Don't do this)</option>
                 </select>
             </div>
-            <div id="habit-days-options">
-                <div class="btn-group" id="habit-days">
-                    <button data-day="0" data-action="toggle-day">S</button><button data-day="1" data-action="toggle-day">M</button><button data-day="2" data-action="toggle-day">T</button><button data-day="3" data-action="toggle-day">W</button><button data-day="4" data-action="toggle-day">T</button><button data-day="5" data-action="toggle-day">F</button><button data-day="6" data-action="toggle-day">S</button>
+
+            <div class="input-group"><label>Tracking</label><select id="task-tracking-type"><option value="completion">Checkmark</option><option value="measurable">Measurable (e.g., 5 glasses)</option><option value="timed">Timed (e.g., 15 mins)</option></select></div>
+            <div id="measurable-options" class="input-group" style="display: none;"><label>Goal</label><input type="number" id="task-measurable-goal" placeholder="e.g., 8"></div>
+            <div id="timed-options" class="input-group" style="display: none;"><label>Minutes</label><input type="number" id="task-timed-goal" placeholder="e.g., 15"></div>
+            
+            <div id="recurrence-options">
+                <div class="input-group">
+                    <label>Repeat</label>
+                    <select id="recurrence-type">
+                        <option value="days">Specific days of the week</option>
+                        <option value="weekly">Certain times per week</option>
+                    </select>
+                </div>
+                <div id="habit-days-options">
+                    <div class="btn-group" id="habit-days">
+                        <button data-day="0" data-action="toggle-day">S</button><button data-day="1" data-action="toggle-day">M</button><button data-day="2" data-action="toggle-day">T</button><button data-day="3" data-action="toggle-day">W</button><button data-day="4" data-action="toggle-day">T</button><button data-day="5" data-action="toggle-day">F</button><button data-day="6" data-action="toggle-day">S</button>
+                    </div>
+                </div>
+                <div id="weekly-options" class="input-group" style="display: none;">
+                    <label>How many times per week?</label>
+                    <input type="number" id="task-weekly-goal" placeholder="e.g., 3" min="1" max="7">
                 </div>
             </div>
-            <div id="weekly-options" class="input-group" style="display: none;">
-                <label>How many times per week?</label>
-                <input type="number" id="task-weekly-goal" placeholder="e.g., 3" min="1" max="7">
+
+            <div class="input-group"><label>Category</label><select id="task-category"></select></div>
+            <div class="input-group"><label>Color</label><input type="color" id="task-color" value="#5e72e4"></div>
+
+            <div id="pause-options" style="display: none;">
+                <h3>Pause Habit</h3>
+                <div class="setting-item">
+                    <label for="pause-toggle">Pause this habit</label>
+                    <label class="switch">
+                        <input type="checkbox" id="pause-toggle">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <div id="pause-until-container" class="input-group" style="display: none; margin-top: 1rem;">
+                    <label for="pause-until-input">Pause until (inclusive)</label>
+                    <input type="date" id="pause-until-input">
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button id="archive-task-btn" class="btn-secondary" style="display: none;" data-action="archive-task">Archive</button>
+                <button id="delete-task-btn" class="btn-danger" style="display: none;" data-action="delete-task">Delete</button>
+                <button id="save-task-btn" class="btn-primary" data-action="save-task">Save</button>
+                <button id="cancel-task-btn" class="btn-secondary" data-action="cancel-task">Cancel</button>
             </div>
         </div>
-        <div class="input-group"><label>Category</label><select id="task-category"></select></div>
-        <div class="input-group"><label>Color</label><input type="color" id="task-color" value="#5e72e4"></div>
-        <div id="pause-options" style="display: none;">
-            <h3>Pause Habit</h3>
+    </div>
+
+    <div id="note-prompt-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2>Add Note</h2>
+            <input type="hidden" id="prompt-task-id"><input type="hidden" id="prompt-date-string">
+            <textarea id="prompt-note-input" placeholder="Optional: Add details..."></textarea>
+            <div class="modal-actions">
+                <button id="save-prompt-note-btn" class="btn-primary" data-action="save-prompt-note">Save</button>
+                <button id="cancel-prompt-note-btn" class="btn-secondary" data-action="cancel-prompt-note">Skip</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="settings-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2>Settings</h2>
+            
             <div class="setting-item">
-                <label for="pause-toggle">Pause this habit</label>
+                <label for="theme-toggle">Dark Mode</label>
                 <label class="switch">
-                    <input type="checkbox" id="pause-toggle">
+                    <input type="checkbox" id="theme-toggle">
                     <span class="slider round"></span>
                 </label>
             </div>
-            <div id="pause-until-container" class="input-group" style="display: none; margin-top: 1rem;">
-                <label for="pause-until-input">Pause until (inclusive)</label>
-                <input type="date" id="pause-until-input">
-            </div>
-        </div>
-        <div class="modal-actions">
-            <button id="archive-task-btn" class="btn-secondary" style="display: none;" data-action="archive-task">Archive</button>
-            <button id="delete-task-btn" class="btn-danger" style="display: none;" data-action="delete-task">Delete</button>
-            <button id="save-task-btn" class="btn-primary" data-action="save-task">Save</button>
-            <button id="cancel-task-btn" class="btn-secondary" data-action="cancel-task">Cancel</button>
-        </div>
-    </div>
-</div>
-
-<div id="note-prompt-modal" class="modal-overlay" style="display: none;">
-    <div class="modal-content">
-        <h2>Add Note</h2>
-        <input type="hidden" id="prompt-task-id"><input type="hidden" id="prompt-date-string">
-        <textarea id="prompt-note-input" placeholder="Optional: Add details..."></textarea>
-        <div class="modal-actions">
-            <button id="save-prompt-note-btn" class="btn-primary" data-action="save-prompt-note">Save</button>
-            <button id="cancel-prompt-note-btn" class="btn-secondary" data-action="cancel-prompt-note">Skip</button>
-        </div>
-    </div>
-</div>
-
-<div id="settings-modal" class="modal-overlay" style="display: none;">
-    <div class="modal-content">
-        <h2>Settings</h2>
-        <div class="setting-item">
-            <label for="theme-toggle">Dark Mode</label>
-            <label class="switch">
-                <input type="checkbox" id="theme-toggle">
-                <span class="slider round"></span>
-            </label>
-        </div>
-        <div class="setting-item">
-            <label for="sound-toggle">Sound Effects</label>
-            <label class="switch">
-                <input type="checkbox" id="sound-toggle">
-                <span class="slider round"></span>
-            </label>
-        </div>
-        <div class="setting-item">
-            <label for="vacation-toggle">Vacation Mode</label>
-            <label class="switch">
-                <input type="checkbox" id="vacation-toggle">
-                <span class="slider round"></span>
-            </label>
-        </div>
-        <div id="vacation-dates" class="input-group" style="display: none;">
-            <label>From</label><input type="date" id="vacation-start">
-            <label>To</label><input type="date" id="vacation-end">
-        </div>
-        <h3>Manage Categories</h3>
-        <div id="category-manager">
-            <div class="input-group">
-                <input type="text" id="new-category-name" placeholder="New category">
-                <button id="add-category-btn" class="btn-primary" data-action="add-category">Add</button>
-            </div>
-            <ul id="category-list"></ul>
-        </div>
-        <div class="data-management-section">
-            <h3>Data Management</h3>
             <div class="setting-item">
-                <label>Export All Data</label>
-                <button id="export-data-btn" class="btn-secondary" data-action="export-data">Download Backup</button>
+                <label for="sound-toggle">Sound Effects</label>
+                <label class="switch">
+                    <input type="checkbox" id="sound-toggle">
+                    <span class="slider round"></span>
+                </label>
             </div>
             <div class="setting-item">
-                <label for="import-data-input">Import from Backup</label>
-                <input type="file" id="import-data-input" accept=".json">
+                <label for="vacation-toggle">Vacation Mode</label>
+                <label class="switch">
+                    <input type="checkbox" id="vacation-toggle">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+            <div id="vacation-dates" class="input-group" style="display: none;">
+                <label>From</label><input type="date" id="vacation-start">
+                <label>To</label><input type="date" id="vacation-end">
+            </div>
+
+            <h3>Manage Categories</h3>
+            <div id="category-manager">
+                <div class="input-group">
+                    <input type="text" id="new-category-name" placeholder="New category">
+                    <button id="add-category-btn" class="btn-primary" data-action="add-category">Add</button>
+                </div>
+                <ul id="category-list"></ul>
+            </div>
+            
+            <div class="data-management-section">
+                <h3>Data Management</h3>
+                <div class="setting-item">
+                    <label>Export All Data</label>
+                    <button id="export-data-btn" class="btn-secondary" data-action="export-data">Download Backup</button>
+                </div>
+                <div class="setting-item">
+                    <label for="import-data-input">Import from Backup</label>
+                    <input type="file" id="import-data-input" accept=".json">
+                </div>
+            </div>
+
+            <h3>Archived Tasks</h3>
+            <ul id="archived-list"></ul>
+
+            <div class="modal-actions">
+                <button id="close-settings-btn" class="btn-primary" data-action="close-settings">Done</button>
             </div>
         </div>
-        <h3>Archived Tasks</h3>
-        <ul id="archived-list"></ul>
-        <div class="modal-actions">
-            <button id="close-settings-btn" class="btn-primary" data-action="close-settings">Done</button>
+    </div>
+
+    <div id="filter-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2>Filter</h2>
+            <div class="input-group"><label for="filter-category">Filter by Category</label><select id="filter-category"></select></div>
+            <div class="modal-actions">
+                <button id="close-filter-btn" class="btn-primary" data-action="apply-filter">Apply</button>
+            </div>
         </div>
     </div>
-</div>
 
-<div id="filter-modal" class="modal-overlay" style="display: none;">
-    <div class="modal-content">
-        <h2>Filter</h2>
-        <div class="input-group"><label for="filter-category">Filter by Category</label><select id="filter-category"></select></div>
-        <div class="modal-actions">
-            <button id="close-filter-btn" class="btn-primary" data-action="apply-filter">Apply</button>
+    <div id="stats-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2>Statistics</h2>
+            <div class="stats-summary">
+                <div><span class="stat-value" id="stats-total-habits">0</span><span class="stat-label">Habits</span></div>
+                <div><span class="stat-value" id="stats-completion-rate">0%</span><span class="stat-label">30-Day Rate</span></div>
+                <div><span class="stat-value" id="stats-total-completions">0</span><span class="stat-label">Completions</span></div>
+            </div>
+            <h3>Habit Breakdown</h3>
+            <div id="stats-list" class="stats-list"></div>
+            <div class="modal-actions"><button id="close-stats-btn" class="btn-primary" data-action="close-stats">Done</button></div>
         </div>
     </div>
-</div>
 
-<div id="stats-modal" class="modal-overlay" style="display: none;">
-    <div class="modal-content">
-        <h2>Statistics</h2>
-        <div class="stats-summary">
-            <div><span class="stat-value" id="stats-total-habits">0</span><span class="stat-label">Habits</span></div>
-            <div><span class="stat-value" id="stats-completion-rate">0%</span><span class="stat-label">30-Day Rate</span></div>
-            <div><span class="stat-value" id="stats-total-completions">0</span><span class="stat-label">Completions</span></div>
-        </div>
-        <h3>Habit Breakdown</h3>
-        <div id="stats-list" class="stats-list"></div>
-        <div class="modal-actions"><button id="close-stats-btn" class="btn-primary" data-action="close-stats">Done</button></div>
-    </div>
-</div>
-
-<div id="achievements-modal" class="modal-overlay" style="display: none;">
-    <div class="modal-content">
-        <h2>Achievements</h2>
-        <div id="achievements-list" class="achievements-list"></div>
-        <div class="modal-actions"><button id="close-achievements-btn" class="btn-primary" data-action="close-achievements">Close</button></div>
-    </div>
-</div>
-
-<div id="timer-modal" class="modal-overlay" style="display: none;">
-    <div class="modal-content">
-        <h2 id="timer-task-name"></h2>
-        <div id="timer-display" class="timer-display">00:00</div>
-        <p>Minutes Remaining</p>
-        <div class="modal-actions">
-            <button id="timer-cancel-btn" class="btn-danger" data-action="cancel-timer">Cancel</button>
+    <div id="achievements-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2>Achievements</h2>
+            <div id="achievements-list" class="achievements-list"></div>
+            <div class="modal-actions"><button id="close-achievements-btn" class="btn-primary" data-action="close-achievements">Close</button></div>
         </div>
     </div>
-</div>
 
-<div id="developer-modal" class="modal-overlay" style="display: none;">
-    <div class="modal-content">
-        <h2>Developer Mode</h2>
-        <h3>Live State Object</h3>
-        <pre id="developer-state-view" class="developer-state-view"></pre>
-        <h3>Actions</h3>
-        <div class="developer-actions">
-            <button class="btn-secondary" data-action="dev-recalculate-streaks">Recalculate Streaks</button>
-            <button class="btn-secondary" data-action="dev-check-achievements">Check Achievements</button>
-            <button class="btn-secondary" data-action="dev-unlock-achievements">Unlock All Achievements</button>
-            <button class="btn-danger" data-action="dev-reset-app">Reset App Data</button>
-        </div>
-        <div class="modal-actions">
-            <button id="close-developer-btn" class="btn-primary" data-action="close-developer">Close</button>
+    <div id="timer-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2 id="timer-task-name"></h2>
+            <div id="timer-display" class="timer-display">00:00</div>
+            <p>Minutes Remaining</p>
+            <div class="modal-actions">
+                <button id="timer-cancel-btn" class="btn-danger" data-action="cancel-timer">Cancel</button>
+            </div>
         </div>
     </div>
-</div>
 
-<div id="toast-notification" class="toast"></div>
+    <div id="developer-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2>Developer Mode</h2>
+            <h3>Live State Object</h3>
+            <pre id="developer-state-view" class="developer-state-view"></pre>
+            <h3>Actions</h3>
+            <div class="developer-actions">
+                <button class="btn-secondary" data-action="dev-recalculate-streaks">Recalculate Streaks</button>
+                <button class="btn-secondary" data-action="dev-check-achievements">Check Achievements</button>
+                <button class="btn-secondary" data-action="dev-unlock-achievements">Unlock All Achievements</button>
+                <button class="btn-danger" data-action="dev-reset-app">Reset App Data</button>
+            </div>
+            <div class="modal-actions">
+                <button id="close-developer-btn" class="btn-primary" data-action="close-developer">Close</button>
+            </div>
+        </div>
+    </div>
 
-{% endblock %}
+   
+
+    <script type="module" src="{% static 'js/app.js' %}"></script>
+</body>
+</html>

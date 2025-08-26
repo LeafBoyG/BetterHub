@@ -1,5 +1,5 @@
 import * as api from './api.js';
-import { loadSettingsFromLocal, setEditingTaskId, getTaskById, state, saveSettingsToLocal } from './state.js';
+import { loadSettingsFromLocal, setEditingTaskId, getTaskById, state, saveSettingsToLocal, ALL_ACHIEVEMENTS } from './state.js';
 import * as ui from './ui.js';
 import * as actions from './actions.js';
 
@@ -17,6 +17,8 @@ class StrideApp {
                 achievements: document.getElementById('achievements-modal'),
                 notePrompt: document.getElementById('note-prompt-modal'),
                 filter: document.getElementById('filter-modal'),
+                login: document.getElementById('login-modal'),
+                registration: document.getElementById('registration-modal'),
             }
         };
         this.draggedItem = null;
@@ -24,17 +26,32 @@ class StrideApp {
     }
 
     async init() {
-        try {
-            state.tasks = await api.getAllTasks();
-            console.log("Tasks loaded from server.");
-        } catch (error) {
-            console.error("Failed to load tasks from server:", error);
-            ui.showToast("Could not load data from server.");
-        }
         loadSettingsFromLocal();
         ui.applyTheme();
+
+        const authToken = localStorage.getItem('authToken');
+        if (authToken) {
+            try {
+                state.tasks = await api.getAllTasks();
+                console.log("Tasks loaded from server.");
+            } catch (error) {
+                console.error("Failed to load tasks from server:", error);
+                // --- CORRECTED LOGIC ---
+                // We show an error but DON'T log the user out automatically.
+                // This will break the login loop.
+                ui.showToast("Could not load your data. Please try logging in again.");
+                localStorage.removeItem('authToken'); // Clear the potentially bad token
+            }
+        }
+        
         this.setupEventListeners();
-        ui.showPage('main-page');
+        
+        if (window.location.pathname.includes('/stride/')) {
+            ui.showPage('main-page');
+        } else {
+            ui.showPage('hub-page');
+        }
+
         ui.render();
         this.registerServiceWorker();
     }
@@ -42,7 +59,6 @@ class StrideApp {
     setupEventListeners() {
         this.dom.body.addEventListener('click', this.handleGlobalClick.bind(this));
         
-        // Only add listeners if the task list exists on the page
         if (this.dom.taskList) {
             this.dom.taskList.addEventListener('click', this.handleTaskListClick.bind(this));
             this.dom.taskList.addEventListener('dragstart', this.onDragStart.bind(this));
@@ -51,7 +67,6 @@ class StrideApp {
             this.dom.taskList.addEventListener('drop', this.onDrop.bind(this));
         }
         
-        // Add listeners for modals if they exist
         if (this.dom.modals.task) {
             this.dom.modals.task.addEventListener('change', this.handleTaskModalChange.bind(this));
         }
@@ -65,18 +80,15 @@ class StrideApp {
             this.dom.modals.developer.addEventListener('click', this.handleDeveloperModalClick.bind(this));
         }
 
-        // Safely add listeners for elements that might not be on every page
         const habitSelect = document.getElementById('habit-select');
         if (habitSelect) {
             habitSelect.addEventListener('change', (e) => ui.renderHabitPerformanceChart(e.target.value));
         }
-
         const importInput = document.getElementById('import-data-input');
         if (importInput) {
             importInput.addEventListener('change', (e) => actions.importData(e));
         }
         
-        // Secret developer mode trigger
         if (this.dom.headerTitle) {
             let devClickCount = 0;
             let devClickTimer = null;
@@ -99,7 +111,19 @@ class StrideApp {
         const target = e.target.closest('[data-action]');
         if (!target) return;
         const action = target.dataset.action;
+        
         const actionMap = {
+            'change-password-submit': (event) => {
+            event.preventDefault();
+            actions.handleChangePassword();
+        },
+            'show-login-modal': () => ui.openModal(this.dom.modals.login),
+            'close-login-modal': () => ui.closeModal(this.dom.modals.login),
+            'login-submit': (event) => { event.preventDefault(); actions.handleLogin(); },
+            'logout': actions.handleLogout,
+            'show-reg-modal': () => ui.openModal(this.dom.modals.registration),
+            'close-reg-modal': () => ui.closeModal(this.dom.modals.registration),
+            'register-submit': (event) => { event.preventDefault(); actions.handleRegistration(); },
             'onboard-add': () => ui.openTaskModal(),
             'quick-add': () => ui.openTaskModal(),
             'change-day-prev': () => actions.changeDay(-1),
@@ -133,7 +157,12 @@ class StrideApp {
             'add-category': actions.addCategory,
             'close-developer': () => ui.closeModal(this.dom.modals.developer),
             'toggle-day': (e) => e.target.classList.toggle('active'),
+             'change-password-submit': (event) => {
+            event.preventDefault();
+            actions.handleChangePassword();
+        },
         };
+
         if (actionMap[action]) actionMap[action](e);
     }
     
@@ -143,13 +172,11 @@ class StrideApp {
         const taskItem = e.target.closest('.task-item');
         if (!taskItem) return;
         if (taskItem.classList.contains('paused') && actionTarget.dataset.action !== 'edit') return;
-
         const id = parseInt(taskItem.dataset.id);
         const action = actionTarget.dataset.action;
         const task = getTaskById(id);
         if (!task) return;
         let history = task.history?.[state.currentDate] || { completed: false, measurableProgress: 0 };
-        
         switch (action) {
             case 'edit': setEditingTaskId(id); ui.openTaskModal(id); break;
             case 'complete': actions.completeTask(id, state.currentDate, !history.completed); break;
@@ -248,7 +275,7 @@ class StrideApp {
                 ui.showToast("Achievement check complete.");
             },
             'dev-unlock-achievements': () => {
-                state.unlockedAchievements = Object.keys(actions.ALL_ACHIEVEMENTS);
+                state.unlockedAchievements = Object.keys(ALL_ACHIEVEMENTS);
                 saveSettingsToLocal();
                 ui.showToast("All achievements unlocked.");
             },

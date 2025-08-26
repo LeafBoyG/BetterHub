@@ -1,20 +1,29 @@
 from django.shortcuts import render
 from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated
 from .models import Task
 from .serializers import TaskSerializer
+from django.contrib.auth.decorators import login_required
 
-# This is the API View that was missing
+# This is the API View for handling data
 class TaskViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows tasks to be viewed or edited.
-    """
-    queryset = Task.objects.all().order_by('order')
     serializer_class = TaskSerializer
+    permission_classes = [IsAuthenticated]
 
-# This view renders our new hub page
+    def get_queryset(self):
+        return self.request.user.tasks.all().order_by('order')
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
+# This view renders main Hub page
 def hub_view(request):
     return render(request, 'hub.html')
 
-# This view renders the Stride habit tracker page
+# This view renders Stride app page
 def stride_view(request):
     return render(request, 'stride.html')
+
+@login_required
+def profile_view(request):
+    return render(request, 'profile.html')

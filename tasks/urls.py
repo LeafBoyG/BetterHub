@@ -6,7 +6,7 @@ from .views import TaskViewSet
 router = DefaultRouter()
 router.register(r'tasks', TaskViewSet, basename='task')
 
-# The API URLs are now determined automatically by the router.
+# The urlpatterns list is now created from the router.
 urlpatterns = [
     path('', include(router.urls)),
 ]
