@@ -1,53 +1,55 @@
-// state.js
-let tasks = [];
-let settings = {
-  theme: "light",
-  vacationMode: false,
-  categories: [],
-  archivedTasks: [],
+export const ALL_ACHIEVEMENTS = {
+    FIRST_STEP: { name: 'First Step', desc: 'Complete your very first task.', icon: '👟' },
+    STREAK_STARTER: { name: 'Streak Starter', desc: 'Achieve a 3-day streak.', icon: '🔥' },
+    WEEKLY_WARRIOR: { name: 'Weekly Warrior', desc: 'Achieve a 7-day streak.', icon: '🗓️' },
+    MONTHLY_MASTER: { name: 'Monthly Master', desc: 'Achieve a 30-day streak.', icon: '📅' },
+    DEDICATED: { name: 'Dedicated', desc: 'Log 50 total completions.', icon: '🎯' },
+    COMMITTED: { name: 'Committed', desc: 'Log 100 total completions.', icon: '💯' },
 };
-let journalEntries = [];
-let achievements = [];
-let editingTaskId = null;
 
-// =============== State Management ===============
+export let state = {
+    tasks: [],
+    categories: ['Fitness', 'Work', 'Self-Care', 'Home'],
+    currentDate: new Date().toDateString(),
+    settings: {
+        theme: 'light',
+        enableSound: true,
+        vacationMode: { active: false, start: null, end: null },
+        filter: { category: 'all' },
+        developerMode: false,
+    },
+    unlockedAchievements: [],
+    editingTaskId: null,
+    timer: { interval: null, taskId: null, endTime: null },
+};
 
-// Tasks
-export function getTasks() {
-  return tasks;
-}
-export function setTasks(newTasks) {
-  tasks = newTasks;
-}
-
-// Settings
-export function getSettings() {
-  return settings;
-}
-export function setSettings(newSettings) {
-  settings = newSettings;
-}
-
-// Journal
-export function getJournalEntries() {
-  return journalEntries;
-}
-export function setJournalEntries(newEntries) {
-  journalEntries = newEntries;
+export function saveSettingsToLocal() {
+    localStorage.setItem('strideSettings', JSON.stringify(state.settings));
 }
 
-// Achievements
-export function getAchievements() {
-  return achievements;
-}
-export function setAchievements(newAchievements) {
-  achievements = newAchievements;
+export function loadSettingsFromLocal() {
+    const savedSettings = localStorage.getItem('strideSettings');
+    if (savedSettings) {
+        try {
+            const loaded = JSON.parse(savedSettings);
+            state.settings = { ...state.settings, ...loaded };
+        } catch (e) {
+            console.error("Failed to parse settings from localStorage.");
+        }
+    }
 }
 
-// Editing Task ID
 export function setEditingTaskId(id) {
-  editingTaskId = id;
+    state.editingTaskId = id;
 }
-export function getEditingTaskId() {
-  return editingTaskId;
+
+export function getTaskById(id) {
+    return state.tasks.find(t => t.id === id);
+}
+
+export function updateTaskHistory(id, dateString, newHistoryData) {
+    const task = getTaskById(id);
+    if (!task) return;
+    if (!task.history) task.history = {};
+    task.history[dateString] = { ...(task.history[dateString] || {}), ...newHistoryData };
 }

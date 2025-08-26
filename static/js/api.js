@@ -25,12 +25,10 @@ export async function getAllTasks() {
     const response = await fetch(API_URL, {
         headers: {
             'Content-Type': 'application/json',
-            // ADD THIS LINE: Include the auth token
             'Authorization': `Token ${localStorage.getItem('authToken')}`
         }
     });
     if (!response.ok) {
-        // Pass the status code for better error handling in app.js
         const error = new Error('Network response was not ok');
         error.status = response.status;
         throw error;
@@ -44,14 +42,11 @@ export async function createTask(taskData) {
         headers: {
             'Content-Type': 'application/json',
             'X-CSRFToken': csrftoken,
-            // ADD THIS LINE: Include the auth token
             'Authorization': `Token ${localStorage.getItem('authToken')}`
         },
         body: JSON.stringify(taskData)
     });
-    if (!response.ok) {
-        throw new Error('Failed to create task');
-    }
+    if (!response.ok) { throw new Error('Failed to create task'); }
     return await response.json();
 }
 
@@ -61,14 +56,11 @@ export async function updateTask(taskId, taskData) {
         headers: {
             'Content-Type': 'application/json',
             'X-CSRFToken': csrftoken,
-            // ADD THIS LINE: Include the auth token
             'Authorization': `Token ${localStorage.getItem('authToken')}`
         },
         body: JSON.stringify(taskData)
     });
-    if (!response.ok) {
-        throw new Error('Failed to update task');
-    }
+    if (!response.ok) { throw new Error('Failed to update task'); }
     return await response.json();
 }
 
@@ -77,13 +69,10 @@ export async function deleteTask(taskId) {
         method: 'DELETE',
         headers: {
             'X-CSRFToken': csrftoken,
-            // ADD THIS LINE: Include the auth token
             'Authorization': `Token ${localStorage.getItem('authToken')}`
         }
     });
-    if (!response.ok) {
-        throw new Error('Failed to delete task');
-    }
+    if (!response.ok) { throw new Error('Failed to delete task'); }
 }
 
 // --- Auth API Functions ---
@@ -91,10 +80,7 @@ export async function deleteTask(taskId) {
 export async function loginUser(username, password) {
     const response = await fetch('/api/auth/token/login/', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrftoken
-        },
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
         body: JSON.stringify({ username, password })
     });
     if (!response.ok) {
@@ -108,7 +94,6 @@ export async function loginUser(username, password) {
 export async function logoutUser() {
     const token = localStorage.getItem('authToken');
     if (!token) return;
-
     await fetch('/api/auth/token/logout/', {
         method: 'POST',
         headers: {
@@ -117,17 +102,13 @@ export async function logoutUser() {
             'X-CSRFToken': csrftoken
         }
     });
-    // Remove the token regardless of server response
     localStorage.removeItem('authToken');
 }
 
 export async function registerUser(username, email, password) {
     const response = await fetch('/api/auth/users/', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrftoken
-        },
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
         body: JSON.stringify({ username, email, password })
     });
     if (!response.ok) {
@@ -137,7 +118,7 @@ export async function registerUser(username, email, password) {
     }
     return await response.json();
 }
-// In static/js/api.js
+
 export async function changePassword(current_password, new_password, re_new_password) {
     const response = await fetch('/api/auth/users/set_password/', {
         method: 'POST',
@@ -153,18 +134,4 @@ export async function changePassword(current_password, new_password, re_new_pass
         const errorMessage = Object.values(errorData).flat().join(' ');
         throw new Error(errorMessage || 'Password change failed.');
     }
-}
-// In static/js/api.js
-
-export async function getUserProfile() {
-    const response = await fetch('/api/auth/users/me/', {
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Token ${localStorage.getItem('authToken')}`
-        }
-    });
-    if (!response.ok) {
-        throw new Error('Could not fetch user profile.');
-    }
-    return await response.json();
 }

@@ -129,9 +129,11 @@ export function renderHeader() {
 export function renderTasks() {
     const taskList = document.getElementById('task-list');
     if (!taskList) return;
+
     const viewDate = new Date(state.currentDate);
     const viewDay = viewDate.getDay();
     const { filter } = state.settings;
+
     const tasksToDisplay = state.tasks
         .filter(task => {
             if (task.archived) return false;
@@ -144,6 +146,7 @@ export function renderTasks() {
             return false;
         })
         .sort((a, b) => a.order - b.order);
+
     if (localStorage.getItem('authToken') && state.tasks.length === 0) {
         taskList.innerHTML = `
             <div class="empty-state-onboarding">
@@ -605,7 +608,7 @@ export function openSettingsModal() {
 export function openFilterModal() {
     const filterCategorySelect = document.getElementById('filter-category');
     const categories = ['all', ...state.categories];
-    filterCategorySelect.innerHTML = categories.map(cat => `<option value="${cat}">${cat === 'all' ? 'All Categories' : cat}</option>`).join('');
+    filterCategorySelect.innerHTML = categories.map(cat => `<option value="${c}">${cat === 'all' ? 'All Categories' : cat}</option>`).join('');
     filterCategorySelect.value = state.settings.filter.category;
     openModal(document.getElementById('filter-modal'));
 }
@@ -613,17 +616,4 @@ export function openFilterModal() {
 export function openDeveloperModal() {
     document.getElementById('developer-state-view').textContent = JSON.stringify(state, null, 2);
     openModal(document.getElementById('developer-modal'));
-}
-
-// ===================================================================
-// UI HELPER FUNCTIONS
-// ===================================================================
-
-function getWeeklyProgressUI(task, viewDate) {
-    if (task.recurrence?.type !== 'weekly') return { ui: '', isComplete: false };
-    const weeklyCompletions = getWeeklyCompletions(task, viewDate);
-    const weeklyGoal = task.recurrence.timesPerWeek;
-    const isComplete = weeklyCompletions >= weeklyGoal;
-    const ui = `<div class="weekly-progress">[ ${weeklyCompletions} / ${weeklyGoal} ]</div>`;
-    return { ui, isComplete };
 }
