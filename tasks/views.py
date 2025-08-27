@@ -5,7 +5,7 @@ from .models import Task
 from .serializers import TaskSerializer
 from django.contrib.auth.decorators import login_required
 
-# This is the API View for handling data
+# This is the API View for handling your data
 class TaskViewSet(viewsets.ModelViewSet):
     serializer_class = TaskSerializer
     permission_classes = [IsAuthenticated]
@@ -16,11 +16,11 @@ class TaskViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
 
-# This view renders main Hub page
+# This view renders your main Hub page
 def hub_view(request):
     return render(request, 'hub.html')
 
-# This view renders Stride app page
+# This view renders your Stride app page
 def stride_view(request):
     return render(request, 'stride.html')
 

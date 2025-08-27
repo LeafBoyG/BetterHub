@@ -80,7 +80,11 @@ export function updateNavState() {
     if (authToken) {
         if (loggedInNav) loggedInNav.style.display = 'flex';
         if (loggedOutNav) loggedOutNav.style.display = 'none';
-        if(welcomeMessage) welcomeMessage.textContent = `Welcome!`; // Placeholder
+        if (welcomeMessage) {
+            // In a real app, you would fetch the username from an API endpoint
+            // For now, we'll keep it simple.
+            welcomeMessage.textContent = `Welcome!`;
+        }
     } else {
         if (loggedInNav) loggedInNav.style.display = 'none';
         if (loggedOutNav) loggedOutNav.style.display = 'flex';
@@ -614,10 +618,6 @@ export function openDeveloperModal() {
     document.getElementById('developer-state-view').textContent = JSON.stringify(state, null, 2);
     openModal(document.getElementById('developer-modal'));
 }
-
-// ===================================================================
-// UI HELPER FUNCTIONS
-// ===================================================================
 
 function getWeeklyProgressUI(task, viewDate) {
     if (task.recurrence?.type !== 'weekly' || !task.recurrence.timesPerWeek) return { ui: '', isComplete: false };
