@@ -7,20 +7,7 @@
     <link rel="stylesheet" href="{% static 'css/hub.css' %}">
 {% endblock %}
 
-{% block top_nav %}
-   <div class="hub-nav">
-    <div id="logged-in-nav" style="display: none;">
-        <span id="welcome-message"></span>
-        <a href="{% url 'profile' %}" class="btn-secondary">Profile</a>
-        <a href="#" data-action="logout" class="btn-secondary">Logout</a>
-    </div>
 
-    <div id="logged-out-nav">
-        <button class="btn-secondary" data-action="show-reg-modal">Register</button>
-        <button class="btn-primary" data-action="show-login-modal">Login</button>
-    </div>
-</div>
-{% endblock %}
 
 {% block content %}
 <div class="page-content-wrapper">
@@ -29,23 +16,50 @@
         <p>Select an application to get started.</p>
     </div>
 
+
+    {% block top_nav %}
+ <div class="hub-nav">
+    <div id="logged-in-nav" style="display: none;">
+        <span id="welcome-message"></span>
+        <a href="{% url 'profile' %}" class="btn-secondary">Profile</a>
+        <a href="#" data-action="logout" class="btn-secondary">Logout</a>
+    </div>
+    <div id="logged-out-nav">
+        <button class="btn-secondary" data-action="show-reg-modal">Register</button>
+        <button class="btn-primary" data-action="show-login-modal">Login</button>
+    </div>
+</div>
+{% endblock %}
+
     <div class="hub-grid">
         <a href="{% url 'stride-app' %}" class="app-card">
-            <div class="app-card-icon">👟</div>
-            <h3>Stride</h3>
-            <p>Track your habits and build consistency.</p>
+            <div class="app-card-icon">
+                <img src="{% static 'icons/DashboardIcon.svg' %}" alt="Stride Icon">
+            </div>
+            <div class="app-card-text">
+                <h3>Stride</h3>
+                <p>Track your habits and build consistency.</p>
+            </div>
         </a>
 
         <a href="#" class="app-card placeholder">
-            <div class="app-card-icon">📓</div>
-            <h3>Journal</h3>
-            <p>Record your thoughts and progress.</p>
+            <div class="app-card-icon">
+                <img src="{% static 'icons/JournalIcon.svg' %}" alt="Journal Icon">
+            </div>
+            <div class="app-card-text">
+                <h3>Journal</h3>
+                <p>Record your thoughts and progress.</p>
+            </div>
         </a>
 
         <a href="#" class="app-card placeholder">
-            <div class="app-card-icon">💰</div>
-            <h3>Finances</h3>
-            <p>Manage your budget and savings.</p>
+            <div class="app-card-icon">
+                <img src="{% static 'icons/Statistics icon.svg' %}" alt="Finances Icon">
+            </div>
+            <div class="app-card-text">
+                <h3>Finances</h3>
+                <p>Manage your budget and savings.</p>
+            </div>
         </a>
     </div>
 </div>

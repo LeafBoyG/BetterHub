@@ -19,34 +19,20 @@
             <h3>Profile Details</h3>
             <div class="input-group">
                 <label>Username</label>
-                <input type="text" id="profile-username" value="{{ user.username }}" disabled>
+                <input type="text" id="profile-username" disabled>
             </div>
             <div class="input-group">
                 <label>Email</label>
-                <input type="email" id="profile-email" value="{{ user.email }}" disabled>
+                <input type="email" id="profile-email" disabled>
             </div>
         </div>
 
         <div class="profile-section">
-            <h3>Change Password</h3>
-            <form id="change-password-form">
-                <div class="input-group">
-                    <label for="current-password">Current Password</label>
-                    <input type="password" id="current-password" required autocomplete="current-password">
-                </div>
-                <div class="input-group">
-                    <label for="new-password">New Password</label>
-                    <input type="password" id="new-password" required autocomplete="new-password">
-                </div>
-                <div class="input-group">
-                    <label for="re-new-password">Confirm New Password</label>
-                    <input type="password" id="re-new-password" required autocomplete="new-password">
-                </div>
-                <div class="modal-actions">
-                    <button type="submit" class="btn-primary" data-action="change-password-submit">Save New Password</button>
-                </div>
-            </form>
-        </div>
+            </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script type="module" src="{% static 'js/profile.js' %}"></script>
 {% endblock %}

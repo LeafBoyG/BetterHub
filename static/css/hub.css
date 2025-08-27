@@ -1,21 +1,51 @@
-/* --- HUB PAGE STYLES --- */
+/* --- REFINED HUB PAGE STYLES --- */
+.hub-nav {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    padding: 1rem 0;
+}
+
+.hub-nav span, .hub-nav a {
+    font-weight: 500;
+}
+
+.page-content-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center the content */
+    padding-top: 4rem;
+}
+
+/* This is now just for the app cards container */
 .hub-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    display: flex;
+    flex-direction: column; /* Stack cards vertically */
     gap: 1.5rem;
     padding-top: 2rem;
+    width: 100%;
+    max-width: 500px; /* Constrain the width of the cards list */
 }
 
 .app-card {
-    background-color: var(--fg-color);
-    border: 1px solid var(--border-color);
+    /* REFINEMENT: Glassmorphism effect */
+    background: rgba(51, 65, 85, 0.55); /* Semi-transparent background */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    
     border-radius: 16px;
-    padding: 2rem;
-    text-align: center;
+    padding: 1.5rem;
+    text-align: left; /* Align text to the left */
     text-decoration: none;
     color: var(--text-color);
     box-shadow: 0 4px 12px var(--shadow-color);
     transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    display: flex; /* Use flexbox for icon and text alignment */
+    align-items: center;
+    gap: 1.5rem;
 }
 
 .app-card:hover {
@@ -25,23 +55,25 @@
 }
 
 .app-card-icon {
-    font-size: 3rem;
+    font-size: 2.5rem; /* Icon size */
     line-height: 1;
-    margin-bottom: 1rem;
+    color: var(--primary-color);
+    flex-shrink: 0;
 }
 
-.app-card h3 {
-    font-size: 1.5rem;
-    margin-bottom: 0.5rem;
+.app-card-text h3 {
+    font-size: 1.25rem;
+    margin-bottom: 0.25rem;
 }
 
-.app-card p {
+.app-card-text p {
     color: var(--text-muted-color);
+    font-size: 0.9rem;
 }
 
 .app-card.placeholder {
     opacity: 0.6;
-    background-color: var(--bg-color);
+    background-color: transparent;
     cursor: not-allowed;
 }
 

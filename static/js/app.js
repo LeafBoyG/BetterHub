@@ -1,5 +1,5 @@
 import * as api from './api.js';
-import { loadSettingsFromLocal, setEditingTaskId, getTaskById, state, saveSettingsToLocal } from './state.js';
+import { loadSettingsFromLocal, setEditingTaskId, getTaskById, state, saveSettingsToLocal, ALL_ACHIEVEMENTS } from './state.js';
 import * as ui from './ui.js';
 import * as actions from './actions.js';
 
@@ -35,11 +35,10 @@ class StrideApp {
                 console.log("Tasks loaded from server.");
             } catch (error) {
                 console.error("Failed to load tasks from server:", error);
-                if (error.status === 401 || error.status === 403) {
-                    actions.handleLogout();
-                } else {
-                    ui.showToast("Could not load data from server.");
-                }
+                // CORRECTED: Don't automatically log out. Just clear the bad token and update the UI.
+                localStorage.removeItem('authToken');
+                ui.updateNavState();
+                ui.showToast("Session expired. Please log in again.");
             }
         }
         
@@ -59,8 +58,8 @@ class StrideApp {
         if (urlParams.has('next')) {
             ui.openModal(this.dom.modals.login);
         }
-
-        this.registerServiceWorker();
+        
+        ui.updateNavState(); // Always update nav on initial load
     }
 
     setupEventListeners() {

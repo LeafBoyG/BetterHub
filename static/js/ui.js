@@ -80,11 +80,7 @@ export function updateNavState() {
     if (authToken) {
         if (loggedInNav) loggedInNav.style.display = 'flex';
         if (loggedOutNav) loggedOutNav.style.display = 'none';
-        if (welcomeMessage) {
-            // In a real app, you would fetch the username from an API endpoint
-            // For now, we'll keep it simple.
-            welcomeMessage.textContent = `Welcome!`;
-        }
+        if(welcomeMessage) welcomeMessage.textContent = `Welcome!`; // Placeholder
     } else {
         if (loggedInNav) loggedInNav.style.display = 'none';
         if (loggedOutNav) loggedOutNav.style.display = 'flex';
