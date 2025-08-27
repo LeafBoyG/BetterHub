@@ -9,6 +9,9 @@ class StrideApp {
             body: document.body,
             taskList: document.getElementById('task-list'),
             headerTitle: document.getElementById('header-title'),
+            hamburgerBtn: document.getElementById('hamburger-btn'),
+            mobileNav: document.getElementById('mobile-nav'),
+            navOverlay: document.getElementById('nav-overlay'),
             modals: {
                 task: document.getElementById('task-modal'),
                 settings: document.getElementById('settings-modal'),
@@ -29,16 +32,18 @@ class StrideApp {
         loadSettingsFromLocal();
         ui.applyTheme();
 
-        if (localStorage.getItem('authToken')) {
+        const authToken = localStorage.getItem('authToken');
+        if (authToken) {
             try {
                 state.tasks = await api.getAllTasks();
                 console.log("Tasks loaded from server.");
             } catch (error) {
                 console.error("Failed to load tasks from server:", error);
-                // CORRECTED: Don't automatically log out. Just clear the bad token and update the UI.
-                localStorage.removeItem('authToken');
-                ui.updateNavState();
-                ui.showToast("Session expired. Please log in again.");
+                if (error.status === 401 || error.status === 403) {
+                    actions.handleLogout();
+                } else {
+                    ui.showToast("Could not load data from server.");
+                }
             }
         }
         
@@ -58,8 +63,8 @@ class StrideApp {
         if (urlParams.has('next')) {
             ui.openModal(this.dom.modals.login);
         }
-        
-        ui.updateNavState(); // Always update nav on initial load
+
+        this.registerServiceWorker();
     }
 
     setupEventListeners() {
@@ -84,6 +89,12 @@ class StrideApp {
         }
         if (this.dom.modals.developer) {
             this.dom.modals.developer.addEventListener('click', this.handleDeveloperModalClick.bind(this));
+        }
+        if (this.dom.hamburgerBtn) {
+            this.dom.hamburgerBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.toggleMobileNav();
+            });
         }
 
         const habitSelect = document.getElementById('habit-select');
@@ -115,8 +126,19 @@ class StrideApp {
     
     handleGlobalClick(e) {
         const target = e.target.closest('[data-action]');
+        
+        if (this.dom.body.classList.contains('nav-open')) {
+            if (!e.target.closest('#mobile-nav')) {
+                this.toggleMobileNav();
+            }
+        }
+        
         if (!target) return;
         const action = target.dataset.action;
+
+        if (this.dom.body.classList.contains('nav-open') && target.classList.contains('nav-link')) {
+            this.toggleMobileNav();
+        }
         
         const actionMap = {
             'show-login-modal': () => ui.openModal(this.dom.modals.login),
@@ -335,6 +357,12 @@ class StrideApp {
                 return closest;
             }
         }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+    toggleMobileNav() {
+        if (this.dom.body) {
+            this.dom.body.classList.toggle('nav-open');
+        }
     }
     
     registerServiceWorker() {
